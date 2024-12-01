@@ -1,2 +1,2 @@
 # U-Net
-U Net architecture for medical image segmentation
+U Net model for segmentation of COVID lesions in CT scans.
