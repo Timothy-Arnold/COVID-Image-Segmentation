@@ -4,17 +4,8 @@ from tqdm import tqdm
 import os
 
 from PIL import Image
-from verstack.stratified_continuous_split import scsplit
+from torch.utils.data import Dataset
 
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-import torch.nn.init as init
-from torch.utils.data import Dataset, DataLoader
-
-
-rs = 42
 
 ROOT_DIR = "C:/Users/timcy/Documents/Code/Personal/U-Net/"
 # Iterate over all files in the directories
