@@ -13,40 +13,22 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 import torch.nn.init as init
-from torch.utils.data import DataLoader
+from torch.utils.data import Dataset, DataLoader
 from torch.utils.data import Subset
-from torchvision import datasets, transforms
 import torchvision.transforms as transforms
+from data_preprocess import ROOT_DIR, LungDataset # Import custom dataset class
 
-# Directory containing the scans
-scans_dir = "C:/Users/timcy/Documents/Code/Personal/U-Net/data/scans/"
-masks_dir = "C:/Users/timcy/Documents/Code/Personal/U-Net/data/masks/"
 
-# List to store the paths of all png files
-scans = []
-masks = []
-shapes = []
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-# Iterate over all files in the directory
-for filename in tqdm(os.listdir(scans_dir)):
-    scan = np.array(Image.open(os.path.join(scans_dir, filename)).convert('L'))
-    mask = np.array(Image.open(os.path.join(masks_dir, filename)).convert('L'))
-    scans.append(scan)
-    masks.append(mask)
-    shape = scan.shape
-    shapes.append(shape)
+rs = 42
+in_channels = 1
+out_channels = 1
+learning_rate = 1e-3
+batch_size = 32
+max_epochs = 100
+early_stopping_steps = 10
 
-image = Image.open(os.path.join(scans_dir, filename)).convert('L')
-mask = Image.open(os.path.join(masks_dir, filename)).convert('L')
-
-transform = transforms.Compose([
-    transforms.ToTensor(),
-    # transforms.Resize((128, 128)),
-])
-image_tensor = transform(image)
-mask_tensor = transform(mask)
-print(image_tensor.shape)
-print(mask_tensor.shape)
 
 class UNet(nn.Module):
     def __init__(self, in_channels=1, out_channels=1):
@@ -97,13 +79,84 @@ class UNet(nn.Module):
             nn.ReLU(inplace=True),
         )
     
+
+def train(model, train_loader, max_epochs, early_stopping_steps):
+    criterion = nn.NLLLoss()
+    optimizer = optim.Adam(model.parameters())
+
+    validation_decrease_counter = 0
+    highest_validation_accuracy = 0
+    stopped_early = False
+
+    for epoch in range(max_epochs):
+        for batch in train_loader:
+            images, labels = batch
+            images, labels = images.to(device), labels.to(device)
+            optimizer.zero_grad()
+            predictions = model(images)
+            loss = criterion(predictions, labels)
+            loss.backward()
+            optimizer.step()
+
+        train_accuracy = test_accuracy(model, train_loader)
+        validation_accuracy = test_accuracy(model, validation_loader)
+        print(f"Epoch {epoch + 1} - Train accuracy: {format(train_accuracy, '.2f')}% - Validation accuracy: {format(validation_accuracy, '.2f')}%")
+
+        if validation_accuracy > highest_validation_accuracy:
+            highest_validation_accuracy = validation_accuracy
+            validation_decrease_counter = 0
+        else:
+            validation_decrease_counter += 1
+
+        if validation_decrease_counter == early_stopping_steps:
+            print("Early stopping criteria met")
+            stopped_early = True
+            break
+
+    if not stopped_early:
+        print("Maximum number of epochs reached")
+
+
 if __name__ == "__main__":
-    model = UNet(in_channels=1, out_channels=1)
-    model.eval()
+    # Prepare datasets
+    df = pd.read_csv("data/df_full.csv")
 
-    with torch.no_grad():
-        prediction = model(image_tensor).squeeze(0)
+    transform = transforms.Compose([transforms.ToTensor()])
+    dataset = LungDataset(df, ROOT_DIR, transform=transform)
 
-    prediction = prediction.cpu().numpy()
-    prediction_image = Image.fromarray(prediction, mode='L')
-    prediction_image.show()
+    # Split into train/val/test sets based on 6:1:1 ratio, stratified by mask coverage percentage.
+    df_indexed = df.reset_index()
+
+    train_indices, test_indices = scsplit(
+        df_indexed,
+        stratify=df_indexed["mask_coverage"],
+        test_size=0.25,
+        train_size=0.75,
+        random_state=rs,
+    )
+    val_indices, test_indices = scsplit(
+        test_indices,
+        stratify=test_indices["mask_coverage"],
+        test_size=0.5,
+        train_size=0.5,
+        random_state=rs,
+    )
+    train_dataset = Subset(dataset, train_indices["index"].values)
+    val_dataset = Subset(dataset, val_indices["index"].values)
+    test_dataset = Subset(dataset, test_indices["index"].values)
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
+
+    # Train model
+
+    # model = UNet(in_channels=in_channels, out_channels=out_channels)
+    # model.eval()
+
+    # with torch.no_grad():
+    #     prediction = model(image_tensor).squeeze(0)
+
+    # prediction = prediction.cpu().numpy()
+    # prediction_image = Image.fromarray(prediction, mode='L')
+    # prediction_image.show()
