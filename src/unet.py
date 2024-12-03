@@ -5,14 +5,11 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 from PIL import Image
-from sklearn.model_selection import train_test_split
 from verstack.stratified_continuous_split import scsplit
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
-import torch.nn.init as init
 from torch.utils.data import Dataset, DataLoader
 from torch.utils.data import Subset
 import torchvision.transforms as transforms
@@ -80,41 +77,41 @@ class UNet(nn.Module):
         )
     
 
-def train(model, train_loader, max_epochs, early_stopping_steps):
-    criterion = nn.NLLLoss()
-    optimizer = optim.Adam(model.parameters())
+# def train(model, train_loader, max_epochs, early_stopping_steps):
+#     criterion = nn.NLLLoss()
+#     optimizer = optim.Adam(model.parameters())
 
-    validation_decrease_counter = 0
-    highest_validation_accuracy = 0
-    stopped_early = False
+#     validation_decrease_counter = 0
+#     highest_validation_accuracy = 0
+#     stopped_early = False
 
-    for epoch in range(max_epochs):
-        for batch in train_loader:
-            images, labels = batch
-            images, labels = images.to(device), labels.to(device)
-            optimizer.zero_grad()
-            predictions = model(images)
-            loss = criterion(predictions, labels)
-            loss.backward()
-            optimizer.step()
+#     for epoch in range(max_epochs):
+#         for batch in train_loader:
+#             images, labels = batch
+#             images, labels = images.to(device), labels.to(device)
+#             optimizer.zero_grad()
+#             predictions = model(images)
+#             loss = criterion(predictions, labels)
+#             loss.backward()
+#             optimizer.step()
 
-        train_accuracy = test_accuracy(model, train_loader)
-        validation_accuracy = test_accuracy(model, validation_loader)
-        print(f"Epoch {epoch + 1} - Train accuracy: {format(train_accuracy, '.2f')}% - Validation accuracy: {format(validation_accuracy, '.2f')}%")
+#         train_accuracy = test_accuracy(model, train_loader)
+#         validation_accuracy = test_accuracy(model, validation_loader)
+#         print(f"Epoch {epoch + 1} - Train accuracy: {format(train_accuracy, '.2f')}% - Validation accuracy: {format(validation_accuracy, '.2f')}%")
 
-        if validation_accuracy > highest_validation_accuracy:
-            highest_validation_accuracy = validation_accuracy
-            validation_decrease_counter = 0
-        else:
-            validation_decrease_counter += 1
+#         if validation_accuracy > highest_validation_accuracy:
+#             highest_validation_accuracy = validation_accuracy
+#             validation_decrease_counter = 0
+#         else:
+#             validation_decrease_counter += 1
 
-        if validation_decrease_counter == early_stopping_steps:
-            print("Early stopping criteria met")
-            stopped_early = True
-            break
+#         if validation_decrease_counter == early_stopping_steps:
+#             print("Early stopping criteria met")
+#             stopped_early = True
+#             break
 
-    if not stopped_early:
-        print("Maximum number of epochs reached")
+#     if not stopped_early:
+#         print("Maximum number of epochs reached")
 
 
 if __name__ == "__main__":
@@ -151,12 +148,4 @@ if __name__ == "__main__":
 
     # Train model
 
-    # model = UNet(in_channels=in_channels, out_channels=out_channels)
-    # model.eval()
-
-    # with torch.no_grad():
-    #     prediction = model(image_tensor).squeeze(0)
-
-    # prediction = prediction.cpu().numpy()
-    # prediction_image = Image.fromarray(prediction, mode='L')
-    # prediction_image.show()
+    model = UNet(in_channels=in_channels, out_channels=out_channels)
