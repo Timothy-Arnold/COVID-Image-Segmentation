@@ -57,15 +57,15 @@ class UNet(nn.Module):
         x4 = self.enc4(self.pool(x3))
 
         x = self.upconv1(x4)
-        x = torch.cat([x, x3], dim=0)
+        x = torch.cat([x, x3], dim=1)
         x = self.dec1(x)
 
         x = self.upconv2(x)
-        x = torch.cat([x, x2], dim=0)
+        x = torch.cat([x, x2], dim=1)
         x = self.dec2(x)
 
         x = self.upconv3(x)
-        x = torch.cat([x, x1], dim=0)
+        x = torch.cat([x, x1], dim=1)
         x = self.dec3(x)
 
         x = self.dec4(x)
