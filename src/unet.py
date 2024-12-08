@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 import os
 from tqdm import tqdm
+from time import time
+import matplotlib
+matplotlib.use('TkAgg')  # or try 'Qt5Agg' if TkAgg doesn't work
 import matplotlib.pyplot as plt
 
 from PIL import Image
@@ -23,7 +26,7 @@ in_channels = 1
 out_channels = 1
 learning_rate = 1e-3
 batch_size = 32
-max_epochs = 100
+max_epochs = 10
 early_stopping_steps = 10
 
 
@@ -75,53 +78,12 @@ class UNet(nn.Module):
             nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
         )
-    
-
-# def train(model, train_loader, max_epochs, early_stopping_steps):
-#     criterion = nn.NLLLoss()
-#     optimizer = optim.Adam(model.parameters())
-
-#     validation_decrease_counter = 0
-#     highest_validation_accuracy = 0
-#     stopped_early = False
-
-#     for epoch in range(max_epochs):
-#         for batch in train_loader:
-#             images, labels = batch
-#             images, labels = images.to(device), labels.to(device)
-#             optimizer.zero_grad()
-#             predictions = model(images)
-#             loss = criterion(predictions, labels)
-#             loss.backward()
-#             optimizer.step()
-
-#         train_accuracy = test_accuracy(model, train_loader)
-#         validation_accuracy = test_accuracy(model, validation_loader)
-#         print(f"Epoch {epoch + 1} - Train accuracy: {format(train_accuracy, '.2f')}% - Validation accuracy: {format(validation_accuracy, '.2f')}%")
-
-#         if validation_accuracy > highest_validation_accuracy:
-#             highest_validation_accuracy = validation_accuracy
-#             validation_decrease_counter = 0
-#         else:
-#             validation_decrease_counter += 1
-
-#         if validation_decrease_counter == early_stopping_steps:
-#             print("Early stopping criteria met")
-#             stopped_early = True
-#             break
-
-#     if not stopped_early:
-#         print("Maximum number of epochs reached")
 
 
-if __name__ == "__main__":
-    # Prepare datasets
-    df = pd.read_csv("data/df_full.csv")
-
+def split_data(df, batch_size, num_workers):
     transform = transforms.Compose([transforms.ToTensor()])
     dataset = LungDataset(df, ROOT_DIR, transform=transform)
 
-    # Split into train/val/test sets based on 6:1:1 ratio, stratified by mask coverage percentage.
     df_indexed = df.reset_index()
 
     train_indices, test_indices = scsplit(
@@ -145,7 +107,90 @@ if __name__ == "__main__":
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
+    
+    return train_loader, val_loader, test_loader
+
+
+def train(
+        model, 
+        train_loader, 
+        val_loader, 
+        test_loader,
+        max_epochs, 
+        early_stopping_steps, 
+        training_history
+    ):
+    start_time = time()
+
+    for epoch in tqdm(range(1, max_epochs + 1)):
+        model.train()
+        total_train_loss = 0
+        total_test_loss = 0
+
+        for batch in train_loader:
+            images, masks = batch
+            images, masks = images.to(device), masks.to(device)
+
+            predictions = model(images)
+            loss = loss_fn(predictions, masks)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+            total_train_loss += loss
+
+        with torch.no_grad():
+            model.eval()
+            for batch in test_loader:
+                images, masks = batch
+                images, masks = images.to(device), masks.to(device)
+
+                predictions = model(images)
+                loss = loss_fn(predictions, masks)
+                total_test_loss += loss
+
+        average_train_loss = total_train_loss / len(train_loader)
+        average_test_loss = total_test_loss / len(test_loader)
+
+        print(f"Epoch {epoch} - Average train loss: {average_train_loss:.4f} - Average test loss: {average_test_loss:.4f}")
+
+        training_history["train_loss"].append(average_train_loss)
+        training_history["test_loss"].append(average_test_loss)
+
+    end_time = time()
+    print(f"Training completed in {end_time - start_time:.2f} seconds")
+
+    return model, training_history
+
+
+if __name__ == "__main__":
+    # Prepare datasets
+    df = pd.read_csv("data/df_full.csv")
+
+    num_workers = 1 #os.cpu_count()
+    # Split into tr1ain/val/test sets based on 6:1:1 ratio, stratified by mask coverage percentage.
+    train_loader, val_loader, test_loader = split_data(df, batch_size, num_workers)
 
     # Train model
 
-    model = UNet(in_channels=in_channels, out_channels=out_channels)
+    model = UNet(in_channels=in_channels, out_channels=out_channels).to(device)
+
+    loss_fn = nn.BCEWithLogitsLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
+    training_history = {
+        "train_loss": [],
+        "val_loss": [],
+        "test_loss": [],
+    }
+
+    model, training_history = train(
+        model, 
+        train_loader, 
+        val_loader, 
+        test_loader,
+        max_epochs, 
+        early_stopping_steps, 
+        training_history
+    )
