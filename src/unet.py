@@ -17,6 +17,7 @@ from torch.utils.data import Dataset, DataLoader
 from torch.utils.data import Subset
 import torchvision.transforms as transforms
 from data_preprocess import ROOT_DIR, LungDataset # Import custom dataset class
+from monai.losses import DiceLoss
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -25,7 +26,7 @@ rs = 42
 in_channels = 1
 out_channels = 1
 learning_rate = 1e-3
-batch_size = 32
+batch_size = 16
 max_epochs = 10
 early_stopping_steps = 10
 
@@ -69,6 +70,7 @@ class UNet(nn.Module):
         x = self.dec3(x)
 
         x = self.dec4(x)
+        x = F.sigmoid(x)
         return x
         
     def conv_block(self, in_channels, out_channels):
@@ -176,7 +178,7 @@ if __name__ == "__main__":
 
     model = UNet(in_channels=in_channels, out_channels=out_channels).to(device)
 
-    loss_fn = nn.BCEWithLogitsLoss()
+    loss_fn = DiceLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     training_history = {
@@ -194,3 +196,6 @@ if __name__ == "__main__":
         early_stopping_steps, 
         training_history
     )
+
+    torch.save(model, 'unet_trained.pth')
+
