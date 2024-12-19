@@ -1,3 +1,7 @@
+# TODO upscale the final mask later down the line...
+# TODO Add early stopping
+# TODO Upgrade to more advanced architecture
+
 import numpy as np
 import pandas as pd
 import os
@@ -13,7 +17,8 @@ from verstack.stratified_continuous_split import scsplit
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import Dataset, DataLoader
+from torch.nn import BCEWithLogitsLoss
+from torch.utils.data import DataLoader
 from torch.utils.data import Subset
 import torchvision.transforms as transforms
 from data_preprocess import ROOT_DIR, LungDataset # Import custom dataset class
@@ -27,8 +32,9 @@ in_channels = 1
 out_channels = 1
 learning_rate = 1e-3
 batch_size = 16
-max_epochs = 10
+max_epochs = 4
 early_stopping_steps = 10
+image_size = 256
 
 
 class UNet(nn.Module):
@@ -70,7 +76,7 @@ class UNet(nn.Module):
         x = self.dec3(x)
 
         x = self.dec4(x)
-        x = F.sigmoid(x)
+        # x = F.sigmoid(x) # Not needed for BCEWithLogitsLoss, which sigmoids the output before logging
         return x
         
     def conv_block(self, in_channels, out_channels):
@@ -83,7 +89,10 @@ class UNet(nn.Module):
 
 
 def split_data(df, batch_size, num_workers):
-    transform = transforms.Compose([transforms.ToTensor()])
+    transform = transforms.Compose([
+        transforms.ToTensor(), 
+        transforms.Resize((image_size, image_size))
+    ])
     dataset = LungDataset(df, ROOT_DIR, transform=transform)
 
     df_indexed = df.reset_index()
@@ -119,11 +128,17 @@ def train(
         val_loader, 
         test_loader,
         max_epochs, 
-        early_stopping_steps, 
-        training_history
+        early_stopping_steps
     ):
+
+    training_history = {
+        "train_loss": [],
+        "val_loss": [],
+        "test_loss": [],
+    }
     start_time = time()
 
+    print("Starting Epochs!")
     for epoch in tqdm(range(1, max_epochs + 1)):
         model.train()
         total_train_loss = 0
@@ -175,17 +190,10 @@ if __name__ == "__main__":
     train_loader, val_loader, test_loader = split_data(df, batch_size, num_workers)
 
     # Train model
-
     model = UNet(in_channels=in_channels, out_channels=out_channels).to(device)
 
-    loss_fn = DiceLoss()
+    loss_fn = BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
-    training_history = {
-        "train_loss": [],
-        "val_loss": [],
-        "test_loss": [],
-    }
 
     model, training_history = train(
         model, 
@@ -193,9 +201,8 @@ if __name__ == "__main__":
         val_loader, 
         test_loader,
         max_epochs, 
-        early_stopping_steps, 
-        training_history
+        early_stopping_steps
     )
 
-    torch.save(model, 'unet_trained.pth')
+    torch.save(model, 'models/unet_trained.pth')
 
