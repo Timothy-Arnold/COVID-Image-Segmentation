@@ -12,8 +12,8 @@ import matplotlib.pyplot as plt
 
 from PIL import Image
 from verstack.stratified_continuous_split import scsplit
-
 import config
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -85,18 +85,21 @@ def split_data(df, batch_size, num_workers):
 
     df_indexed = df.reset_index()
 
+    val_ratio = config.VAL_SIZE / (config.VAL_SIZE + config.TEST_SIZE)
+    test_ratio = config.TEST_SIZE / (config.VAL_SIZE + config.TEST_SIZE)
+
     train_indices, test_indices = scsplit(
         df_indexed,
         stratify=df_indexed["mask_coverage"],
-        test_size=0.25,
-        train_size=0.75,
+        test_size=1-config.TRAIN_SIZE,
+        train_size=config.TRAIN_SIZE,
         random_state=config.RS,
     )
     val_indices, test_indices = scsplit(
         test_indices,
         stratify=test_indices["mask_coverage"],
-        test_size=0.5,
-        train_size=0.5,
+        test_size=val_ratio,
+        train_size=test_ratio,
         random_state=config.RS,
     )
     train_dataset = Subset(dataset, train_indices["index"].values)
@@ -126,8 +129,8 @@ def train(
     }
     start_time = time()
 
-    print("Starting Epochs!")
-    for epoch in tqdm(range(1, max_epochs + 1)):
+    print(f"Starting Epochs! Max Epochs: {config.MAX_EPOCHS}, Early Stopping Steps: {config.EARLY_STOPPING_STEPS}")
+    for epoch in range(1, max_epochs + 1):
         model.train()
         total_train_loss = 0
         total_test_loss = 0
@@ -160,8 +163,8 @@ def train(
 
         print(f"Epoch {epoch} - Average train BCE loss: {average_train_loss:.4f} - Average test BCE loss: {average_test_loss:.4f}")
 
-        training_history["train_loss"].append(average_train_loss)
-        training_history["test_loss"].append(average_test_loss)
+        training_history["train_loss"].append(average_train_loss.item())
+        training_history["test_loss"].append(average_test_loss.item())
 
     end_time = time()
     print(f"Training completed in {end_time - start_time:.2f} seconds")
@@ -170,6 +173,7 @@ def train(
 
 
 def plot_training_history(training_history):
+    plt.grid(True)
     plt.plot(training_history["train_loss"], label="Train Loss")
     plt.plot(training_history["test_loss"], label="Test Loss")
     plt.xlabel("Epoch #")
@@ -180,7 +184,7 @@ def plot_training_history(training_history):
 
 if __name__ == "__main__":
     # Prepare datasets
-    df = pd.read_csv("data/df_full.csv")
+    df = pd.read_csv(config.DF_PATH)
     num_workers = 1 #os.cpu_count()
     # Split into tr1ain/val/test sets based on 6:1:1 ratio, stratified by mask coverage percentage.
     train_loader, val_loader, test_loader = split_data(df, config.BATCH_SIZE, num_workers)
@@ -203,4 +207,4 @@ if __name__ == "__main__":
     # Save outputs
     plot_training_history(training_history)
 
-    torch.save(model, 'saves/unet_trained.pth')
+    torch.save(model, config.MODEL_SAVE_PATH)
