@@ -4,7 +4,6 @@
 
 import numpy as np
 import pandas as pd
-import os
 from tqdm import tqdm
 from time import time
 import matplotlib
@@ -14,7 +13,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from verstack.stratified_continuous_split import scsplit
 
-from . import config
+import config
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -22,7 +21,7 @@ from torch.nn import BCEWithLogitsLoss
 from torch.utils.data import DataLoader
 from torch.utils.data import Subset
 import torchvision.transforms as transforms
-from data_preprocess import ROOT_DIR, LungDataset # Import custom dataset class
+from dataset import ROOT_DIR, LungDataset # Import custom dataset class
 from monai.losses import DiceLoss
 
 
@@ -159,7 +158,7 @@ def train(
         average_train_loss = total_train_loss / len(train_loader)
         average_test_loss = total_test_loss / len(test_loader)
 
-        print(f"Epoch {epoch} - Average train loss: {average_train_loss:.4f} - Average test loss: {average_test_loss:.4f}")
+        print(f"Epoch {epoch} - Average train BCE loss: {average_train_loss:.4f} - Average test BCE loss: {average_test_loss:.4f}")
 
         training_history["train_loss"].append(average_train_loss)
         training_history["test_loss"].append(average_test_loss)
@@ -175,14 +174,13 @@ def plot_training_history(training_history):
     plt.plot(training_history["test_loss"], label="Test Loss")
     plt.xlabel("Epoch #")
     plt.ylabel("Loss")
-    plt.legend(loc = "upper right")
-    plt.savefig("")
+    plt.legend(loc="upper right")
+    plt.savefig(config.LOSS_PLOT_SAVE_PATH)
 
 
 if __name__ == "__main__":
     # Prepare datasets
     df = pd.read_csv("data/df_full.csv")
-
     num_workers = 1 #os.cpu_count()
     # Split into tr1ain/val/test sets based on 6:1:1 ratio, stratified by mask coverage percentage.
     train_loader, val_loader, test_loader = split_data(df, config.BATCH_SIZE, num_workers)
@@ -202,7 +200,7 @@ if __name__ == "__main__":
         config.EARLY_STOPPING_STEPS
     )
 
+    # Save outputs
     plot_training_history(training_history)
 
     torch.save(model, 'saves/unet_trained.pth')
-
