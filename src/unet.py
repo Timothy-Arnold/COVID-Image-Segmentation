@@ -14,6 +14,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from verstack.stratified_continuous_split import scsplit
 
+from . import config
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -23,18 +24,6 @@ from torch.utils.data import Subset
 import torchvision.transforms as transforms
 from data_preprocess import ROOT_DIR, LungDataset # Import custom dataset class
 from monai.losses import DiceLoss
-
-
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-rs = 42
-in_channels = 1
-out_channels = 1
-learning_rate = 1e-3
-batch_size = 16
-max_epochs = 4
-early_stopping_steps = 10
-image_size = 256
 
 
 class UNet(nn.Module):
@@ -91,7 +80,7 @@ class UNet(nn.Module):
 def split_data(df, batch_size, num_workers):
     transform = transforms.Compose([
         transforms.ToTensor(), 
-        transforms.Resize((image_size, image_size))
+        transforms.Resize((config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
     ])
     dataset = LungDataset(df, ROOT_DIR, transform=transform)
 
@@ -102,14 +91,14 @@ def split_data(df, batch_size, num_workers):
         stratify=df_indexed["mask_coverage"],
         test_size=0.25,
         train_size=0.75,
-        random_state=rs,
+        random_state=config.RS,
     )
     val_indices, test_indices = scsplit(
         test_indices,
         stratify=test_indices["mask_coverage"],
         test_size=0.5,
         train_size=0.5,
-        random_state=rs,
+        random_state=config.RS,
     )
     train_dataset = Subset(dataset, train_indices["index"].values)
     val_dataset = Subset(dataset, val_indices["index"].values)
@@ -146,7 +135,7 @@ def train(
 
         for batch in train_loader:
             images, masks = batch
-            images, masks = images.to(device), masks.to(device)
+            images, masks = images.to(config.DEVICE), masks.to(config.DEVICE)
 
             predictions = model(images)
             loss = loss_fn(predictions, masks)
@@ -161,7 +150,7 @@ def train(
             model.eval()
             for batch in test_loader:
                 images, masks = batch
-                images, masks = images.to(device), masks.to(device)
+                images, masks = images.to(config.DEVICE), masks.to(config.DEVICE)
 
                 predictions = model(images)
                 loss = loss_fn(predictions, masks)
@@ -181,28 +170,39 @@ def train(
     return model, training_history
 
 
+def plot_training_history(training_history):
+    plt.plot(training_history["train_loss"], label="Train Loss")
+    plt.plot(training_history["test_loss"], label="Test Loss")
+    plt.xlabel("Epoch #")
+    plt.ylabel("Loss")
+    plt.legend(loc = "upper right")
+    plt.savefig("")
+
+
 if __name__ == "__main__":
     # Prepare datasets
     df = pd.read_csv("data/df_full.csv")
 
     num_workers = 1 #os.cpu_count()
     # Split into tr1ain/val/test sets based on 6:1:1 ratio, stratified by mask coverage percentage.
-    train_loader, val_loader, test_loader = split_data(df, batch_size, num_workers)
+    train_loader, val_loader, test_loader = split_data(df, config.BATCH_SIZE, num_workers)
 
     # Train model
-    model = UNet(in_channels=in_channels, out_channels=out_channels).to(device)
+    model = UNet(in_channels=config.IN_CHANNELS, out_channels=config.OUT_CHANNELS).to(config.DEVICE)
 
     loss_fn = BCEWithLogitsLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    optimizer = torch.optim.Adam(model.parameters(), lr=config.LR)
 
     model, training_history = train(
         model, 
         train_loader, 
         val_loader, 
         test_loader,
-        max_epochs, 
-        early_stopping_steps
+        config.MAX_EPOCHS, 
+        config.EARLY_STOPPING_STEPS
     )
 
-    torch.save(model, 'models/unet_trained.pth')
+    plot_training_history(training_history)
+
+    torch.save(model, 'saves/unet_trained.pth')
 
