@@ -17,7 +17,7 @@ import config
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import BCEWithLogitsLoss
+from torch.nn import BCELoss
 from torch.utils.data import DataLoader
 from torch.utils.data import Subset
 import torchvision.transforms as transforms
@@ -26,6 +26,9 @@ from monai.losses import DiceLoss
 
 
 class UNet(nn.Module):
+    """
+    U-Net model for image segmentation.
+    """
     def __init__(self, in_channels=1, out_channels=1):
         super(UNet, self).__init__()
 
@@ -64,7 +67,7 @@ class UNet(nn.Module):
         x = self.dec3(x)
 
         x = self.dec4(x)
-        # x = F.sigmoid(x) # Not needed for BCEWithLogitsLoss, which sigmoids the output before logging
+        x = nn.Sigmoid()(x)
         return x
         
     def conv_block(self, in_channels, out_channels):
@@ -129,7 +132,7 @@ def train(
     }
     start_time = time()
 
-    print(f"Starting Epochs! Max Epochs: {config.MAX_EPOCHS}, Early Stopping Steps: {config.EARLY_STOPPING_STEPS}")
+    print(f"Training! Max Epochs: {config.MAX_EPOCHS}, Early Stopping Steps: {config.EARLY_STOPPING_STEPS}")
     for epoch in range(1, max_epochs + 1):
         model.train()
         total_train_loss = 0
@@ -158,10 +161,10 @@ def train(
                 loss = loss_fn(predictions, masks)
                 total_test_loss += loss
 
-        average_train_loss = total_train_loss / len(train_loader)
-        average_test_loss = total_test_loss / len(test_loader)
+        average_train_loss = (total_train_loss / len(train_loader))
+        average_test_loss = (total_test_loss / len(test_loader))
 
-        print(f"Epoch {epoch} - Average train BCE loss: {average_train_loss:.4f} - Average test BCE loss: {average_test_loss:.4f}")
+        print(f"Epoch {epoch} - Average train Dice loss: {average_train_loss:.4f} - Average test Dice loss: {average_test_loss:.4f}")
 
         training_history["train_loss"].append(average_train_loss.item())
         training_history["test_loss"].append(average_test_loss.item())
@@ -174,10 +177,10 @@ def train(
 
 def plot_training_history(training_history):
     plt.grid(True)
-    plt.plot(training_history["train_loss"], label="Train Loss")
-    plt.plot(training_history["test_loss"], label="Test Loss")
+    plt.plot(training_history["train_loss"], label="Train Dice loss")
+    plt.plot(training_history["test_loss"], label="Test Dice loss")
     plt.xlabel("Epoch #")
-    plt.ylabel("Loss")
+    plt.ylabel("Dice loss")
     plt.legend(loc="upper right")
     plt.savefig(config.LOSS_PLOT_SAVE_PATH)
 
@@ -192,7 +195,7 @@ if __name__ == "__main__":
     # Train model
     model = UNet(in_channels=config.IN_CHANNELS, out_channels=config.OUT_CHANNELS).to(config.DEVICE)
 
-    loss_fn = BCEWithLogitsLoss()
+    loss_fn = DiceLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config.LR)
 
     model, training_history = train(
