@@ -77,6 +77,24 @@ class UNet(nn.Module):
             nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
         )
+    
+
+class EarlyStopper:
+    def __init__(self, patience=1, min_delta=0):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.counter = 0
+        self.min_validation_loss = np.inf
+
+    def early_stop(self, validation_loss):
+        if validation_loss < self.min_validation_loss:
+            self.min_validation_loss = validation_loss
+            self.counter = 0
+        elif validation_loss > (self.min_validation_loss + self.min_delta):
+            self.counter += 1
+            if self.counter >= self.patience:
+                return True
+        return False
 
 
 def split_data(df, batch_size, num_workers):
@@ -120,9 +138,7 @@ def train(
         model, 
         train_loader, 
         val_loader, 
-        test_loader,
-        max_epochs, 
-        early_stopping_steps
+        test_loader
     ):
 
     training_history = {
@@ -130,12 +146,14 @@ def train(
         "val_loss": [],
         "test_loss": [],
     }
-    start_time = time()
+    early_stopper = EarlyStopper(patience=config.EARLY_STOPPING_STEPS, min_delta=0)
 
+    start_time = time()
     print(f"Training! Max Epochs: {config.MAX_EPOCHS}, Early Stopping Steps: {config.EARLY_STOPPING_STEPS}")
-    for epoch in range(1, max_epochs + 1):
+    for epoch in range(1, config.MAX_EPOCHS + 1):
         model.train()
         total_train_loss = 0
+        total_val_loss = 0
         total_test_loss = 0
 
         for batch in train_loader:
@@ -153,6 +171,14 @@ def train(
 
         with torch.no_grad():
             model.eval()
+            for batch in val_loader:
+                images, masks = batch
+                images, masks = images.to(config.DEVICE), masks.to(config.DEVICE)
+
+                predictions = model(images)
+                loss = loss_fn(predictions, masks)
+                total_val_loss += loss
+
             for batch in test_loader:
                 images, masks = batch
                 images, masks = images.to(config.DEVICE), masks.to(config.DEVICE)
@@ -161,16 +187,29 @@ def train(
                 loss = loss_fn(predictions, masks)
                 total_test_loss += loss
 
-        average_train_loss = (total_train_loss / len(train_loader))
-        average_test_loss = (total_test_loss / len(test_loader))
+        average_train_loss = total_train_loss / len(train_loader)
+        average_val_loss = total_val_loss / len(val_loader)
+        average_test_loss = total_test_loss / len(test_loader)
 
-        print(f"Epoch {epoch} - Average train Dice loss: {average_train_loss:.4f} - Average test Dice loss: {average_test_loss:.4f}")
+        print(
+            f"Epoch {epoch} - Average train Dice loss: {average_train_loss:.4f}\
+            - Average val Dice loss: {average_val_loss:.4f}\
+            - Average test Dice loss: {average_test_loss:.4f}"
+        )
 
         training_history["train_loss"].append(average_train_loss.item())
         training_history["test_loss"].append(average_test_loss.item())
 
+        if early_stopper.early_stop(average_val_loss):
+            print(f"Early stopping triggered after {epoch} epochs - No improvement for {config.EARLY_STOPPING_STEPS} epochs")
+            break
+
     end_time = time()
-    print(f"Training completed in {end_time - start_time:.2f} seconds")
+    total_seconds = end_time - start_time
+    hours = int(total_seconds // 3600)
+    minutes = int((total_seconds % 3600) // 60)
+    seconds = int(total_seconds % 60)
+    print(f"Training completed in {hours}h {minutes}m {seconds}s")
 
     return model, training_history
 
@@ -186,10 +225,17 @@ def plot_training_history(training_history):
 
 
 if __name__ == "__main__":
+    # Set random seeds for reproducibility
+    torch.manual_seed(config.RS)
+    torch.cuda.manual_seed_all(config.RS)
+    np.random.seed(config.RS)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
     # Prepare datasets
     df = pd.read_csv(config.DF_PATH)
-    num_workers = 1 #os.cpu_count()
     # Split into tr1ain/val/test sets based on 6:1:1 ratio, stratified by mask coverage percentage.
+    num_workers = 1 #os.cpu_count()
     train_loader, val_loader, test_loader = split_data(df, config.BATCH_SIZE, num_workers)
 
     # Train model
@@ -202,9 +248,7 @@ if __name__ == "__main__":
         model, 
         train_loader, 
         val_loader, 
-        test_loader,
-        config.MAX_EPOCHS, 
-        config.EARLY_STOPPING_STEPS
+        test_loader
     )
 
     # Save outputs
