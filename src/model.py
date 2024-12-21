@@ -21,7 +21,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.utils.data import Subset
 import torchvision.transforms as transforms
-from dataset import ROOT_DIR, LungDataset # Import custom dataset class
+from dataset import LungDataset # Import custom dataset class
 from monai.losses import DiceLoss
 
 
@@ -102,7 +102,7 @@ def split_data(df, batch_size, num_workers):
         transforms.ToTensor(), 
         transforms.Resize((config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
     ])
-    dataset = LungDataset(df, ROOT_DIR, transform=transform)
+    dataset = LungDataset(df, config.ROOT_DIR, transform=transform)
 
     df_indexed = df.reset_index()
 

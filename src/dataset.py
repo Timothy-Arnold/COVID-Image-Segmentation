@@ -5,13 +5,12 @@ import os
 
 from PIL import Image
 from torch.utils.data import Dataset
+import config
 
 
-ROOT_DIR = "C:/Users/timcy/Documents/Code/Personal/U-Net/"
 # Iterate over all files in the directories
-scans = [f"data/scans/{scan}" for scan in os.listdir(ROOT_DIR + "data/scans/")]
-masks = [f"data/masks/{mask}" for mask in os.listdir(ROOT_DIR + "data/masks/")]
-
+scans = [f"data/scans/{scan}" for scan in os.listdir(config.ROOT_DIR + "data/scans/")]
+masks = [f"data/masks/{mask}" for mask in os.listdir(config.ROOT_DIR + "data/masks/")]
 
 class LungDataset(Dataset):
     def __init__(self, df, root_dir, transform=None):
