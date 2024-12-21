@@ -1,12 +1,14 @@
 import torch
 import os
 
+MODEL_NAME = "unet_2"
+
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-RS = 42
+RS = 1
 IN_CHANNELS = 1
 OUT_CHANNELS = 1
-LR = 1e-4
+LR = 1e-5
 BATCH_SIZE = 32
 MAX_EPOCHS = 100
 EARLY_STOPPING_STEPS = 10
@@ -19,6 +21,6 @@ VAL_SIZE = 0.125
 TEST_SIZE = 0.125
 
 DF_PATH = 'data/df_full.csv'
-LOSS_PLOT_SAVE_PATH = 'output/loss_plot.png'
-MODEL_SAVE_PATH = 'output/unet_trained.pth'
-HYPER_PARAM_SAVE_PATH = 'output/hyper_params.json'
+LOSS_PLOT_SAVE_PATH = f'output/{MODEL_NAME}/loss_plot.png'
+HYPER_PARAM_SAVE_PATH = f'output/{MODEL_NAME}/hyper_params.json'
+MODEL_SAVE_PATH = f'output/{MODEL_NAME}/trained.pth'

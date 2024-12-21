@@ -7,6 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 from time import time
 import json
+import os
 import matplotlib
 matplotlib.use('TkAgg')  # or try 'Qt5Agg' if TkAgg doesn't work
 import matplotlib.pyplot as plt
@@ -225,7 +226,11 @@ f"Epoch {epoch} - Average train Dice loss: {average_train_loss:.4f} \
     return model, training_history
 
 
-def save_results(training_history):
+def save_outputs(model, training_history):
+    # Create output directory if it doesn't exist
+    if not os.path.exists(f'output/{config.MODEL_NAME}'):
+        os.makedirs(f'output/{config.MODEL_NAME}')
+
     plt.grid(True)
     plt.plot(training_history["train_loss"], label="Train Dice loss")
     plt.plot(training_history["val_loss"], label="Val Dice loss")
@@ -262,6 +267,8 @@ def save_results(training_history):
     with open(config.HYPER_PARAM_SAVE_PATH, 'w') as f:
         json.dump(results, f, indent=4)
 
+    torch.save(model, config.MODEL_SAVE_PATH)
+
 
 if __name__ == "__main__":
     # Set random seeds for reproducibility
@@ -290,7 +297,5 @@ if __name__ == "__main__":
         test_loader
     )
 
-    # Save outputs
-    save_results(training_history)
-
-    torch.save(model, config.MODEL_SAVE_PATH)
+    # Save model and results
+    save_outputs(model, training_history)
