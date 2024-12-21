@@ -254,9 +254,9 @@ def save_results(training_history):
 
     results = {
         "hyperparameters": hyperparameters,
-        "train_loss": training_history["train_loss"][-1].item(),
-        "val_loss": training_history["val_loss"][-1].item(),
-        "test_loss": training_history["test_loss"][-1].item(),
+        "train_loss": training_history["train_loss"][-1],
+        "val_loss": training_history["val_loss"][-1],
+        "test_loss": training_history["test_loss"][-1],
     }
 
     with open(config.HYPER_PARAM_SAVE_PATH, 'w') as f:

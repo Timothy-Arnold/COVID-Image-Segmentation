@@ -3,7 +3,7 @@ import os
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-RS = 1
+RS = 42
 IN_CHANNELS = 1
 OUT_CHANNELS = 1
 LR = 1e-4
@@ -21,3 +21,4 @@ TEST_SIZE = 0.125
 DF_PATH = 'data/df_full.csv'
 LOSS_PLOT_SAVE_PATH = 'output/loss_plot.png'
 MODEL_SAVE_PATH = 'output/unet_trained.pth'
+HYPER_PARAM_SAVE_PATH = 'output/hyper_params.json'
