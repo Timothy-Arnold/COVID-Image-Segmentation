@@ -4,7 +4,6 @@
 
 import numpy as np
 import pandas as pd
-from tqdm import tqdm
 from time import time
 import json
 import os
@@ -19,7 +18,6 @@ import config
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.nn import BCELoss
 from torch.utils.data import DataLoader
 from torch.utils.data import Subset
 import torchvision.transforms as transforms
@@ -146,15 +144,18 @@ def print_time_taken(start_time, end_time):
 
 def train(
         model, 
+        optimizer,
+        loss_fn,
         train_loader, 
         val_loader, 
         test_loader
     ):
 
+    # Initialize training history with 1 for each loss metric, for the zeroth epoch
     training_history = {
-        "train_loss": [],
-        "val_loss": [],
-        "test_loss": [],
+        "train_loss": [1],
+        "val_loss": [1],
+        "test_loss": [1],
     }
     early_stopper = EarlyStopper(patience=config.EARLY_STOPPING_STEPS, min_delta=0)
 
@@ -175,6 +176,8 @@ def train(
             predictions = model(images)
             loss = loss_fn(predictions, masks)
 
+            # For the zeroth epoch, save losses before training starts
+            # if epoch != 0:
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
@@ -218,7 +221,9 @@ f"Epoch {epoch} - Average train Dice loss: {average_train_loss:.4f} \
             break
 
     if not stopped_early:
-        print(f"Training completed after max epochs: {config.MAX_EPOCHS}")
+        print(f"Training completed after max epochs: {epoch}")
+
+    training_history["epochs"] = epoch
 
     end_time = time()
     print_time_taken(start_time, end_time)
@@ -250,6 +255,7 @@ def save_outputs(model, training_history):
         'max_epochs': config.MAX_EPOCHS,
         'early_stopping_steps': config.EARLY_STOPPING_STEPS,
         'early_stopping_min_delta': config.EARLY_STOPPING_MIN_DELTA,
+        'epochs': training_history["epochs"],
         'image_width': config.IMAGE_WIDTH,
         'image_height': config.IMAGE_HEIGHT,
         'train_size': config.TRAIN_SIZE,
@@ -292,6 +298,8 @@ if __name__ == "__main__":
 
     model, training_history = train(
         model, 
+        optimizer,
+        loss_fn,
         train_loader, 
         val_loader, 
         test_loader

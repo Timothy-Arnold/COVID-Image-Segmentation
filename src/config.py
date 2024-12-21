@@ -5,12 +5,12 @@ MODEL_NAME = "unet_2"
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-RS = 1
+RS = 2
 IN_CHANNELS = 1
 OUT_CHANNELS = 1
-LR = 1e-5
+LR = 1e-4
 BATCH_SIZE = 32
-MAX_EPOCHS = 100
+MAX_EPOCHS = 200
 EARLY_STOPPING_STEPS = 10
 EARLY_STOPPING_MIN_DELTA = 0
 IMAGE_WIDTH = 256
