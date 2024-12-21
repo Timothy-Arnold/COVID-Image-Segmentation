@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 from time import time
+import json
 import matplotlib
 matplotlib.use('TkAgg')  # or try 'Qt5Agg' if TkAgg doesn't work
 import matplotlib.pyplot as plt
@@ -134,6 +135,14 @@ def split_data(df, batch_size, num_workers):
     return train_loader, val_loader, test_loader
 
 
+def print_time_taken(start_time, end_time):
+    total_seconds = end_time - start_time
+    hours = int(total_seconds // 3600)
+    minutes = int((total_seconds % 3600) // 60)
+    seconds = int(total_seconds % 60)
+    print(f"Training completed in {hours}h {minutes}m {seconds}s")
+
+
 def train(
         model, 
         train_loader, 
@@ -147,6 +156,8 @@ def train(
         "test_loss": [],
     }
     early_stopper = EarlyStopper(patience=config.EARLY_STOPPING_STEPS, min_delta=0)
+
+    stopped_early = False
 
     start_time = time()
     print(f"Training! Max Epochs: {config.MAX_EPOCHS}, Early Stopping Steps: {config.EARLY_STOPPING_STEPS}")
@@ -192,36 +203,64 @@ def train(
         average_test_loss = total_test_loss / len(test_loader)
 
         print(
-            f"Epoch {epoch} - Average train Dice loss: {average_train_loss:.4f}\
-            - Average val Dice loss: {average_val_loss:.4f}\
-            - Average test Dice loss: {average_test_loss:.4f}"
-        )
+f"Epoch {epoch} - Average train Dice loss: {average_train_loss:.4f} \
+- Average val Dice loss: {average_val_loss:.4f} \
+- Average test Dice loss: {average_test_loss:.4f}")
 
         training_history["train_loss"].append(average_train_loss.item())
+        training_history["val_loss"].append(average_val_loss.item())
         training_history["test_loss"].append(average_test_loss.item())
 
         if early_stopper.early_stop(average_val_loss):
+            stopped_early = True
             print(f"Early stopping triggered after {epoch} epochs - No improvement for {config.EARLY_STOPPING_STEPS} epochs")
             break
 
+    if not stopped_early:
+        print(f"Training completed after max epochs: {config.MAX_EPOCHS}")
+
     end_time = time()
-    total_seconds = end_time - start_time
-    hours = int(total_seconds // 3600)
-    minutes = int((total_seconds % 3600) // 60)
-    seconds = int(total_seconds % 60)
-    print(f"Training completed in {hours}h {minutes}m {seconds}s")
+    print_time_taken(start_time, end_time)
 
     return model, training_history
 
 
-def plot_training_history(training_history):
+def save_results(training_history):
     plt.grid(True)
     plt.plot(training_history["train_loss"], label="Train Dice loss")
+    plt.plot(training_history["val_loss"], label="Val Dice loss")
     plt.plot(training_history["test_loss"], label="Test Dice loss")
     plt.xlabel("Epoch #")
     plt.ylabel("Dice loss")
     plt.legend(loc="upper right")
     plt.savefig(config.LOSS_PLOT_SAVE_PATH)
+
+    hyperparameters = {
+        'device': str(config.DEVICE),
+        'random_seed': config.RS,
+        'input_channels': config.IN_CHANNELS, 
+        'output_channels': config.OUT_CHANNELS,
+        'learning_rate': config.LR,
+        'batch_size': config.BATCH_SIZE,
+        'max_epochs': config.MAX_EPOCHS,
+        'early_stopping_steps': config.EARLY_STOPPING_STEPS,
+        'early_stopping_min_delta': config.EARLY_STOPPING_MIN_DELTA,
+        'image_width': config.IMAGE_WIDTH,
+        'image_height': config.IMAGE_HEIGHT,
+        'train_size': config.TRAIN_SIZE,
+        'val_size': config.VAL_SIZE, 
+        'test_size': config.TEST_SIZE
+    }
+
+    results = {
+        "hyperparameters": hyperparameters,
+        "train_loss": training_history["train_loss"][-1].item(),
+        "val_loss": training_history["val_loss"][-1].item(),
+        "test_loss": training_history["test_loss"][-1].item(),
+    }
+
+    with open(config.HYPER_PARAM_SAVE_PATH, 'w') as f:
+        json.dump(results, f, indent=4)
 
 
 if __name__ == "__main__":
@@ -252,6 +291,6 @@ if __name__ == "__main__":
     )
 
     # Save outputs
-    plot_training_history(training_history)
+    save_results(training_history)
 
     torch.save(model, config.MODEL_SAVE_PATH)
