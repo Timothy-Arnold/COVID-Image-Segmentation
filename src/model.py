@@ -11,7 +11,6 @@ import matplotlib
 matplotlib.use('TkAgg')  # or try 'Qt5Agg' if TkAgg doesn't work
 import matplotlib.pyplot as plt
 
-from PIL import Image
 from verstack.stratified_continuous_split import scsplit
 import config
 
@@ -67,7 +66,7 @@ class UNet(nn.Module):
         x = self.dec3(x)
 
         x = self.dec4(x)
-        x = nn.Sigmoid()(x)
+        x = F.sigmoid(x)
         return x
         
     def conv_block(self, in_channels, out_channels):
@@ -176,8 +175,6 @@ def train(
             predictions = model(images)
             loss = loss_fn(predictions, masks)
 
-            # For the zeroth epoch, save losses before training starts
-            # if epoch != 0:
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()

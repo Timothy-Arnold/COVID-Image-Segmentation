@@ -8,23 +8,22 @@ import matplotlib.pyplot as plt
 
 from PIL import Image
 import os
-import sys
 
 import config
 from model import UNet
 
 import torch
-import torch.nn as nn
 import torchvision.transforms as transforms
 from monai.losses import DiceLoss
 
 # def visualize_predictions(model_path, df_sample):
 # Set up the figure
 n_samples = 3
+random_state = 3
 
 model_path = config.MODEL_SAVE_PATH
 df = pd.read_csv(config.DF_PATH)
-df_sample = df.sample(n=n_samples, random_state=2).reset_index(drop=True)
+df_sample = df.sample(n=n_samples, random_state=random_state).reset_index(drop=True)
 
 fig, axes = plt.subplots(len(df_sample), 4, figsize=(20, 5*len(df_sample)))
 fig.suptitle('Image, Original Mask and Predicted Mask Comparison', fontsize=16)
