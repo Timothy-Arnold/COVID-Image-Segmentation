@@ -97,34 +97,39 @@ class EarlyStopper:
 
 
 def split_data(df, batch_size, num_workers):
-    transform = transforms.Compose([
+    train_transform = transforms.Compose([
+        # transforms.RandomRotation(15),
+        transforms.ColorJitter(brightness=0.2),  # Randomly adjusts brightness by ±20%
         transforms.ToTensor(), 
         transforms.Resize((config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
     ])
-    dataset = LungDataset(df, config.ROOT_DIR, transform=transform)
 
-    df_indexed = df.reset_index()
+    test_transform = transforms.Compose([
+        transforms.ToTensor(), 
+        transforms.Resize((config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
+    ])
 
     val_ratio = config.VAL_SIZE / (config.VAL_SIZE + config.TEST_SIZE)
     test_ratio = config.TEST_SIZE / (config.VAL_SIZE + config.TEST_SIZE)
 
-    train_indices, test_indices = scsplit(
-        df_indexed,
-        stratify=df_indexed["mask_coverage"],
+    df_train, df_test = scsplit(
+        df,
+        stratify=df["mask_coverage"],
         test_size=1-config.TRAIN_SIZE,
         train_size=config.TRAIN_SIZE,
         random_state=config.RS,
     )
-    val_indices, test_indices = scsplit(
-        test_indices,
-        stratify=test_indices["mask_coverage"],
+    df_val, df_test = scsplit(
+        df_test,
+        stratify=df_test["mask_coverage"],
         test_size=val_ratio,
         train_size=test_ratio,
         random_state=config.RS,
     )
-    train_dataset = Subset(dataset, train_indices["index"].values)
-    val_dataset = Subset(dataset, val_indices["index"].values)
-    test_dataset = Subset(dataset, test_indices["index"].values)
+
+    train_dataset = LungDataset(df_train, config.ROOT_DIR, transform=train_transform)
+    val_dataset = LungDataset(df_val, config.ROOT_DIR, transform=test_transform)
+    test_dataset = LungDataset(df_test, config.ROOT_DIR, transform=test_transform)
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
@@ -161,7 +166,7 @@ def train(
     stopped_early = False
 
     start_time = time()
-    print(f"Training! Max Epochs: {config.MAX_EPOCHS}, Early Stopping Steps: {config.EARLY_STOPPING_STEPS}")
+    print(f"Training {config.MODEL_NAME}! Max Epochs: {config.MAX_EPOCHS}, Early Stopping Steps: {config.EARLY_STOPPING_STEPS}")
     for epoch in range(1, config.MAX_EPOCHS + 1):
         model.train()
         total_train_loss = 0

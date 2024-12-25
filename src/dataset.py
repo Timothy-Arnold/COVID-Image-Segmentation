@@ -14,7 +14,7 @@ masks = [f"data/masks/{mask}" for mask in os.listdir(config.ROOT_DIR + "data/mas
 
 class LungDataset(Dataset):
     def __init__(self, df, root_dir, transform=None):
-        self.annotations = df
+        self.df = df
         self.root_dir = root_dir
         self.transform = transform
 
@@ -22,9 +22,9 @@ class LungDataset(Dataset):
         return len(self.df)
     
     def __getitem__(self, idx):
-        img_path = os.path.join(self.root_dir, self.annotations.iloc[idx, 0])
+        img_path = os.path.join(self.root_dir, self.df.iloc[idx, 0])
         image = Image.open(img_path).convert("L")
-        mask_path = os.path.join(self.root_dir, self.annotations.iloc[idx, 1])
+        mask_path = os.path.join(self.root_dir, self.df.iloc[idx, 1])
         mask = Image.open(mask_path).convert("L")
 
         if self.transform:
