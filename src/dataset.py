@@ -4,6 +4,7 @@ from tqdm import tqdm
 import os
 
 from PIL import Image
+import torch
 from torch.utils.data import Dataset
 import config
 
@@ -30,6 +31,10 @@ class LungDataset(Dataset):
         if self.transform:
             image = self.transform(image)
             mask = self.transform(mask)
+
+        if os.path.basename(img_path).startswith("Jun_radiopaedia"):
+            image = torch.flip(image, dims=[0])
+            mask = torch.flip(mask, dims=[0])
 
         return image, mask
 
