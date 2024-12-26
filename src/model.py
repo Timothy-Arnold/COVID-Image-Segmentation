@@ -84,8 +84,9 @@ class EarlyStopper:
         self.min_delta = min_delta
         self.counter = 0
         self.min_validation_loss = np.inf
+        self.best_model_state = None
 
-    def early_stop(self, validation_loss):
+    def early_stop(self, validation_loss, model):
         early_stop = False
         best_model = False
 
@@ -93,6 +94,7 @@ class EarlyStopper:
             self.min_validation_loss = validation_loss
             self.counter = 0
             best_model = True
+            self.best_model_state = model.state_dict()
         elif validation_loss > (self.min_validation_loss + self.min_delta):
             self.counter += 1
             if self.counter >= self.patience:
@@ -105,7 +107,7 @@ def split_data(df, batch_size, num_workers):
     train_transform = transforms.Compose([
         # transforms.RandomRotation(15),
         # transforms.RandomHorizontalFlip(),
-        transforms.ColorJitter(brightness=0.2),  # Randomly adjusts brightness by ±20%
+        transforms.ColorJitter(brightness=0.2),
         transforms.ToTensor(), 
         transforms.Resize((config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
     ])
@@ -220,7 +222,7 @@ def train(
         average_val_loss = total_val_loss / len(val_loader)
         average_test_loss = total_test_loss / len(test_loader)
 
-        early_stop, best_model = early_stopper.early_stop(average_val_loss)
+        early_stop, best_model = early_stopper.early_stop(average_val_loss, model)
 
         colour_prefix = "\033[35m" if best_model else ""
         colour_suffix = "\033[0m" if best_model else ""
@@ -246,6 +248,11 @@ f"{colour_prefix}Epoch {epoch} - Average train Dice loss: {average_train_loss:.4
 
     end_time = time()
     print_time_taken(start_time, end_time)
+
+    # Before returning, load the best model state
+    if early_stopper.best_model_state is not None:
+        model.load_state_dict(early_stopper.best_model_state)
+        print(f"Restored best model with validation loss: {early_stopper.min_validation_loss:.4f}")
 
     return model, training_history
 
@@ -274,7 +281,6 @@ def save_outputs(model, training_history):
         'max_epochs': config.MAX_EPOCHS,
         'early_stopping_steps': config.EARLY_STOPPING_STEPS,
         'early_stopping_min_delta': config.EARLY_STOPPING_MIN_DELTA,
-        'epochs': training_history["epochs"],
         'image_width': config.IMAGE_WIDTH,
         'image_height': config.IMAGE_HEIGHT,
         'train_size': config.TRAIN_SIZE,
@@ -282,15 +288,24 @@ def save_outputs(model, training_history):
         'test_size': config.TEST_SIZE
     }
 
+    # Find results of model which performed best on validation set
+    best_val_loss = min(training_history["val_loss"])
+    best_val_loss_index = training_history["val_loss"].index(best_val_loss)
+
     results = {
+        'epochs': training_history["epochs"],
+        "train_loss": training_history["train_loss"][best_val_loss_index],
+        "val_loss": best_val_loss,
+        "test_loss": training_history["test_loss"][best_val_loss_index],
+    }
+
+    overall_result = {
         "hyperparameters": hyperparameters,
-        "train_loss": training_history["train_loss"][-1],
-        "val_loss": training_history["val_loss"][-1],
-        "test_loss": training_history["test_loss"][-1],
+        "results": results,
     }
 
     with open(config.HYPER_PARAM_SAVE_PATH, 'w') as f:
-        json.dump(results, f, indent=4)
+        json.dump(overall_result, f, indent=4)
 
     torch.save(model, config.MODEL_SAVE_PATH)
 
