@@ -4,7 +4,6 @@ from tqdm import tqdm
 import os
 
 from PIL import Image
-import torch
 from torch.utils.data import Dataset
 import config
 
@@ -13,11 +12,24 @@ import config
 scans = [f"data/scans/{scan}" for scan in os.listdir(config.ROOT_DIR + "data/scans/")]
 masks = [f"data/masks/{mask}" for mask in os.listdir(config.ROOT_DIR + "data/masks/")]
 
+# Create circle mask
+dimension_size = 512
+circumference = dimension_size - 1
+center = circumference / 2
+radius = center + 0.5 + 5  # Adjust radius as needed 
+
+y, x = np.ogrid[:dimension_size, :dimension_size]
+
+dist_from_center = np.sqrt((x - center)**2 + (y - center)**2)
+
+circle_mask = dist_from_center < radius
+
 class LungDataset(Dataset):
     def __init__(self, df, root_dir, transform=None):
         self.df = df
         self.root_dir = root_dir
         self.transform = transform
+        self.circle_mask = circle_mask
 
     def __len__(self):
         return len(self.df)
@@ -28,13 +40,21 @@ class LungDataset(Dataset):
         mask_path = os.path.join(self.root_dir, self.df.iloc[idx, 1])
         mask = Image.open(mask_path).convert("L")
 
+        # Apply circle mask to mask
+        image = np.array(image)
+        mask = np.array(mask)
+        image = circle_mask * image
+        mask = circle_mask * mask
+        image = Image.fromarray(image)
+        mask = Image.fromarray(mask)
+
         if self.transform:
             image = self.transform(image)
             mask = self.transform(mask)
 
-        if os.path.basename(img_path).startswith("Jun_radiopaedia"):
-            image = torch.flip(image, dims=[0])
-            mask = torch.flip(mask, dims=[0])
+        # if os.path.basename(img_path).startswith("Jun_radiopaedia"):
+        #     image = torch.flip(image, dims=[0])
+        #     mask = torch.flip(mask, dims=[0])
 
         return image, mask
 

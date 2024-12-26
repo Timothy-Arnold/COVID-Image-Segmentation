@@ -1,7 +1,7 @@
 import torch
 import os
 
-MODEL_NAME = "unet_2"
+MODEL_NAME = "unet_circle_mask"
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
