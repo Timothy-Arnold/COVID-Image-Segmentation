@@ -79,14 +79,16 @@ class UNet(nn.Module):
     
 
 class EarlyStopper:
-    def __init__(self, patience=1, min_delta=0):
+    def __init__(self, patience=10, min_delta=0):
         self.patience = patience
         self.min_delta = min_delta
         self.counter = 0
         self.min_validation_loss = np.inf
 
     def early_stop(self, validation_loss):
+        early_stop = False
         best_model = False
+
         if validation_loss < self.min_validation_loss:
             self.min_validation_loss = validation_loss
             self.counter = 0
@@ -95,7 +97,6 @@ class EarlyStopper:
             self.counter += 1
             if self.counter >= self.patience:
                 early_stop = True
-        early_stop = False
 
         return early_stop, best_model
 
@@ -103,7 +104,7 @@ class EarlyStopper:
 def split_data(df, batch_size, num_workers):
     train_transform = transforms.Compose([
         # transforms.RandomRotation(15),
-        transforms.RandomHorizontalFlip(),
+        # transforms.RandomHorizontalFlip(),
         transforms.ColorJitter(brightness=0.2),  # Randomly adjusts brightness by ±20%
         transforms.ToTensor(), 
         transforms.Resize((config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
@@ -113,6 +114,12 @@ def split_data(df, batch_size, num_workers):
         transforms.ToTensor(), 
         transforms.Resize((config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
     ])
+
+    # Validate that dataset split ratios sum to 1
+    total_split = config.TRAIN_SIZE + config.VAL_SIZE + config.TEST_SIZE
+    if not np.isclose(total_split, 1.0, rtol=1e-5):
+        raise ValueError(f"Dataset split ratios must sum to 1.0, but got {total_split} "
+                        f"(train={config.TRAIN_SIZE}, val={config.VAL_SIZE}, test={config.TEST_SIZE})")
 
     val_ratio = config.VAL_SIZE / (config.VAL_SIZE + config.TEST_SIZE)
     test_ratio = config.TEST_SIZE / (config.VAL_SIZE + config.TEST_SIZE)
@@ -171,7 +178,7 @@ def train(
     stopped_early = False
 
     start_time = time()
-    print(f"Training {config.MODEL_NAME}! Max Epochs: {config.MAX_EPOCHS}, Early Stopping Steps: {config.EARLY_STOPPING_STEPS}")
+    print(f"Training '{config.MODEL_NAME}'! Max Epochs: {config.MAX_EPOCHS}, Early Stopping Steps: {config.EARLY_STOPPING_STEPS}")
     for epoch in range(1, config.MAX_EPOCHS + 1):
         model.train()
         total_train_loss = 0
