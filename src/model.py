@@ -86,19 +86,24 @@ class EarlyStopper:
         self.min_validation_loss = np.inf
 
     def early_stop(self, validation_loss):
+        best_model = False
         if validation_loss < self.min_validation_loss:
             self.min_validation_loss = validation_loss
             self.counter = 0
+            best_model = True
         elif validation_loss > (self.min_validation_loss + self.min_delta):
             self.counter += 1
             if self.counter >= self.patience:
-                return True
-        return False
+                early_stop = True
+        early_stop = False
+
+        return early_stop, best_model
 
 
 def split_data(df, batch_size, num_workers):
     train_transform = transforms.Compose([
         # transforms.RandomRotation(15),
+        transforms.RandomHorizontalFlip(),
         transforms.ColorJitter(brightness=0.2),  # Randomly adjusts brightness by ±20%
         transforms.ToTensor(), 
         transforms.Resize((config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
@@ -208,16 +213,21 @@ def train(
         average_val_loss = total_val_loss / len(val_loader)
         average_test_loss = total_test_loss / len(test_loader)
 
+        early_stop, best_model = early_stopper.early_stop(average_val_loss)
+
+        colour_prefix = "\033[35m" if best_model else ""
+        colour_suffix = "\033[0m" if best_model else ""
+
         print(
-f"Epoch {epoch} - Average train Dice loss: {average_train_loss:.4f} \
+f"{colour_prefix}Epoch {epoch} - Average train Dice loss: {average_train_loss:.4f} \
 - Average val Dice loss: {average_val_loss:.4f} \
-- Average test Dice loss: {average_test_loss:.4f}")
+- Average test Dice loss: {average_test_loss:.4f}{colour_suffix}")
 
         training_history["train_loss"].append(average_train_loss.item())
         training_history["val_loss"].append(average_val_loss.item())
         training_history["test_loss"].append(average_test_loss.item())
 
-        if early_stopper.early_stop(average_val_loss):
+        if early_stop:
             stopped_early = True
             print(f"Early stopping triggered after {epoch} epochs - No improvement for {config.EARLY_STOPPING_STEPS} epochs")
             break
