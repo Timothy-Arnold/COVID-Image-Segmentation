@@ -252,7 +252,7 @@ f"{colour_prefix}Epoch {epoch} - Average train Dice loss: {average_train_loss:.4
     # Before returning, load the best model state
     if early_stopper.best_model_state is not None:
         model.load_state_dict(early_stopper.best_model_state)
-        print(f"Restored best model with validation loss: {early_stopper.min_validation_loss:.4f}")
+        print(f"Saving best model with validation loss: {early_stopper.min_validation_loss:.4f}")
 
     return model, training_history
 

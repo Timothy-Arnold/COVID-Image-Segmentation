@@ -4,6 +4,7 @@ from tqdm import tqdm
 import os
 
 from PIL import Image
+import torch
 from torch.utils.data import Dataset
 import config
 
@@ -40,21 +41,21 @@ class LungDataset(Dataset):
         mask_path = os.path.join(self.root_dir, self.df.iloc[idx, 1])
         mask = Image.open(mask_path).convert("L")
 
-        # Apply circle mask to mask
-        image = np.array(image)
+        # Apply circle mask to masks, in order to correct a faulty mask
+        # image = np.array(image)
         mask = np.array(mask)
-        image = circle_mask * image
+        # image = circle_mask * image
         mask = circle_mask * mask
-        image = Image.fromarray(image)
+        # image = Image.fromarray(image)
         mask = Image.fromarray(mask)
 
         if self.transform:
             image = self.transform(image)
             mask = self.transform(mask)
 
-        # if os.path.basename(img_path).startswith("Jun_radiopaedia"):
-        #     image = torch.flip(image, dims=[0])
-        #     mask = torch.flip(mask, dims=[0])
+        if os.path.basename(img_path).startswith("Jun_radiopaedia"):
+            image = torch.flip(image, dims=[1])
+            mask = torch.flip(mask, dims=[1])
 
         return image, mask
 

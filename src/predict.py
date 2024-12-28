@@ -16,9 +16,7 @@ import torch
 import torchvision.transforms as transforms
 from monai.losses import DiceLoss
 
-# def visualize_predictions(model_path, df_sample):
-# Set up the figure
-n_samples = 3
+n_samples = 5
 random_state = 3
 
 model_path = config.MODEL_SAVE_PATH
@@ -60,12 +58,12 @@ with torch.no_grad():
         
         # Plot original image
         axes[idx, 0].imshow(image, cmap='gray')
-        axes[idx, 0].set_title('Original Image')
+        axes[idx, 0].set_title('CT Scan')
         axes[idx, 0].axis('off')
         
         # Plot original mask
         axes[idx, 1].imshow(mask, cmap='gray')
-        axes[idx, 1].set_title('Original Mask')
+        axes[idx, 1].set_title('True Mask')
         axes[idx, 1].axis('off')
         
         # Plot predicted mask with Dice loss in title
@@ -94,7 +92,7 @@ with torch.no_grad():
         combined = np.clip(combined, 0, 1)
         
         axes[idx, 3].imshow(combined)
-        axes[idx, 3].set_title('Combined View\n(Red: Mask, Blue: Prediction)')
+        axes[idx, 3].set_title('Combined - Red: Truth, Blue: Prediction, Magenta: Overlap')
         axes[idx, 3].axis('off')
 
 plt.tight_layout()

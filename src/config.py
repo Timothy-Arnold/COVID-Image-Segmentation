@@ -1,7 +1,7 @@
 import torch
 import os
 
-MODEL_NAME = "unet_circle_mask"
+MODEL_NAME = "unet_flipped_fix_v2"
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -11,8 +11,8 @@ OUT_CHANNELS = 1
 LR = 1e-4
 BATCH_SIZE = 32
 MAX_EPOCHS = 200
-EARLY_STOPPING_STEPS = 10
-EARLY_STOPPING_MIN_DELTA = 0
+EARLY_STOPPING_STEPS = 20
+EARLY_STOPPING_MIN_DELTA = 0.001
 IMAGE_WIDTH = 256
 IMAGE_HEIGHT = 256
 
