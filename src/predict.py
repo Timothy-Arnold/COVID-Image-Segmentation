@@ -42,11 +42,20 @@ with torch.no_grad():
         # Load and transform image
         image_path = os.path.join(config.ROOT_DIR, row.scan)
         image = Image.open(image_path).convert("L")
-        image_tensor = transform(image).unsqueeze(0).to(config.DEVICE)
         
         # Load and transform mask 
         mask_path = os.path.join(config.ROOT_DIR, row.mask)
         mask = Image.open(mask_path).convert("L")
+
+        if os.path.basename(image_path).startswith("Jun_radiopaedia"):
+            image = np.array(image)
+            image = np.flipud(image)
+            image = Image.fromarray(image)
+            mask = np.array(mask)
+            mask = np.flipud(mask)
+            mask = Image.fromarray(mask)
+
+        image_tensor = transform(image).unsqueeze(0).to(config.DEVICE)
         mask_tensor = transform(mask).squeeze(0)
         
         # Get prediction
