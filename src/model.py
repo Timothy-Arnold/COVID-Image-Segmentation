@@ -141,6 +141,9 @@ def split_data(df, batch_size, num_workers):
         random_state=config.RS,
     )
 
+    # Save test df for predictions later
+    df_test.to_csv("data/df_test.csv", index=False)
+
     train_dataset = LungDataset(df_train, config.ROOT_DIR, transform=train_transform)
     val_dataset = LungDataset(df_val, config.ROOT_DIR, transform=test_transform)
     test_dataset = LungDataset(df_test, config.ROOT_DIR, transform=test_transform)

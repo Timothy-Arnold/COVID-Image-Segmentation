@@ -17,13 +17,13 @@ import torchvision.transforms as transforms
 from monai.losses import DiceLoss
 
 n_samples = 5
-random_state = 3
+random_state = 1
 
 model_path = config.MODEL_SAVE_PATH
-df = pd.read_csv(config.DF_PATH)
+df = pd.read_csv(config.DF_TEST_PATH)
 df_sample = df.sample(n=n_samples, random_state=random_state).reset_index(drop=True)
 
-fig, axes = plt.subplots(len(df_sample), 4, figsize=(20, 5*len(df_sample)))
+fig, axes = plt.subplots(n_samples, 4, figsize=(20, 5*n_samples))
 fig.suptitle('Image, Original Mask and Predicted Mask Comparison', fontsize=16)
 
 model = torch.load(model_path)
