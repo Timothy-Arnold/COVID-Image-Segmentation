@@ -1,7 +1,7 @@
 import torch
 import os
 
-MODEL_NAME = "unet_flipped_fix_v2"
+MODEL_NAME = "unet_smaller_batch_size"
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -9,7 +9,7 @@ RS = 2
 IN_CHANNELS = 1
 OUT_CHANNELS = 1
 LR = 1e-4
-BATCH_SIZE = 32
+BATCH_SIZE = 16
 MAX_EPOCHS = 200
 EARLY_STOPPING_STEPS = 20
 EARLY_STOPPING_MIN_DELTA = 0.001
