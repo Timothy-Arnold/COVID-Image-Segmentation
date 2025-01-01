@@ -5,7 +5,6 @@ from time import time
 import matplotlib
 matplotlib.use('TkAgg')  # or try 'Qt5Agg' if TkAgg doesn't work
 import matplotlib.pyplot as plt
-
 from PIL import Image
 import os
 
@@ -17,7 +16,7 @@ import torchvision.transforms as transforms
 from monai.losses import DiceLoss
 
 n_samples = 5
-random_state = 1
+random_state = 0
 
 model_path = config.MODEL_SAVE_PATH
 df = pd.read_csv(config.DF_TEST_PATH)

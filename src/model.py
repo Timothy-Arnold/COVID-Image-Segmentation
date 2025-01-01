@@ -1,7 +1,3 @@
-# TODO upscale the final mask later down the line...
-# TODO Add early stopping
-# TODO Upgrade to more advanced architecture
-
 import numpy as np
 import pandas as pd
 from time import time
@@ -10,8 +6,8 @@ import os
 import matplotlib
 matplotlib.use('TkAgg')  # or try 'Qt5Agg' if TkAgg doesn't work
 import matplotlib.pyplot as plt
-
 from verstack.stratified_continuous_split import scsplit
+
 import config
 
 import torch
@@ -25,9 +21,6 @@ from monai.losses import DiceLoss
 
 
 class UNet(nn.Module):
-    """
-    U-Net model for image segmentation.
-    """
     def __init__(self, in_channels=1, out_channels=1):
         super(UNet, self).__init__()
 
@@ -265,6 +258,8 @@ def save_outputs(model, training_history):
     if not os.path.exists(f'output/{config.MODEL_NAME}'):
         os.makedirs(f'output/{config.MODEL_NAME}')
 
+    # Plot loss history
+    plt.figure(figsize=(12, 7))
     plt.grid(True)
     plt.plot(training_history["train_loss"], label="Train Dice loss")
     plt.plot(training_history["val_loss"], label="Val Dice loss")
@@ -323,7 +318,8 @@ if __name__ == "__main__":
 
     # Prepare datasets
     df = pd.read_csv(config.DF_PATH)
-    # Split into tr1ain/val/test sets based on 6:1:1 ratio, stratified by mask coverage percentage.
+    # Split into train/val/test sets, stratified by mask coverage percentage 
+    # in order to ensure that the test set is representative of the population.
     num_workers = 1 #os.cpu_count()
     train_loader, val_loader, test_loader = split_data(df, config.BATCH_SIZE, num_workers)
 

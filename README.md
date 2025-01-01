@@ -26,3 +26,7 @@ Ideas to try:
 
 - Use a different version of dice loss, to penalise false negatives more?
 - New architecture?
+
+TODOs 
+- upscale the final mask later down the line
+- Try more advanced architecture

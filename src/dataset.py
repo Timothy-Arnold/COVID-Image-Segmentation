@@ -40,12 +40,12 @@ class LungDataset(Dataset):
         mask_path = os.path.join(self.root_dir, self.df.iloc[idx, 1])
         mask = Image.open(mask_path).convert("L")
 
-        # Apply circle mask to masks, in order to correct a faulty mask
+        # Apply circle mask to masks, ONLY in order to correct a faulty mask
         # image = np.array(image)
-        mask = np.array(mask)
         # image = circle_mask * image
-        mask = circle_mask * mask
         # image = Image.fromarray(image)
+        mask = np.array(mask)
+        mask = circle_mask * mask
         mask = Image.fromarray(mask)
 
         if self.transform:
