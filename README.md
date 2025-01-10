@@ -3,7 +3,7 @@ U Net model for segmentation of lung lesions in CT scans of COVID patients.
 
 Data from Kaggle: https://www.kaggle.com/datasets/maedemaftouni/covid19-ct-scan-lesion-segmentation-dataset/data
 
-The MIT license is for the the code in this repository, not this data.
+The MIT license is for the code in this repository, not this data.
 
 Papers read and used:
 
@@ -28,5 +28,6 @@ Ideas to try:
 - New architecture?
 
 TODOs 
-- upscale the final mask later down the line
-- Try more advanced architecture
+- upscale the final mask later down the line, for slightly more accurate dice loss results
+- Try more advanced architectures e.g. using attention mechanisms
+- For loss function for penalising false negatives more
