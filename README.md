@@ -31,3 +31,4 @@ TODOs
 - upscale the final mask later down the line, for slightly more accurate dice loss results
 - Try more advanced architectures e.g. using attention mechanisms
 - For loss function for penalising false negatives more
+- Improve interpretability of model predictions, perhaps with SHAP or LIME
