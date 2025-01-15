@@ -10,11 +10,10 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from monai.losses import DiceLoss
 
 import config
 from dataset import split_data
-from utils import print_time_taken, generalized_weighted_dice_loss
+from utils import GWDiceLoss, print_time_taken
 
 
 class UNet(nn.Module):
@@ -263,7 +262,7 @@ if __name__ == "__main__":
     # Train model
     model = UNet(in_channels=config.IN_CHANNELS, out_channels=config.OUT_CHANNELS).to(config.DEVICE)
 
-    loss_fn = DiceLoss()
+    loss_fn = GWDiceLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config.LR)
 
     model, training_history = train(
