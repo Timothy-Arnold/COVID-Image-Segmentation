@@ -1,10 +1,26 @@
 import torch
+import torch.nn as nn
 
 
-def dice_loss(pred, true, threshold=0.5, smooth=1e-5):
-    pred = torch.where(pred > threshold, 1, 0)
+class GWDiceLoss(nn.Module):
+    def __init__(self, beta=1, smooth=1e-5):
+        super(GWDiceLoss, self).__init__()
+        self.weighting = (1 + beta ** 2)
+        self.smooth = smooth
+    
+    def forward(self, pred, true):
+        pred = pred.view(-1)
+        true = true.view(-1)
+        
+        tp = torch.sum(pred * true)
+        fn = torch.sum((1 - pred) * true)
+        fp = torch.sum(pred * (1 - true))
 
-    return generalized_dice_loss(pred, true, smooth=smooth)
+        numerator = self.weighting * tp + self.smooth
+        denominator = self.weighting * tp + (self.weighting - 1) * fn + fp + self.smooth
+        dice = numerator / denominator
+
+        return 1 - dice
 
 
 def generalized_dice_loss(pred, true, smooth=1e-5):
@@ -17,6 +33,12 @@ def generalized_dice_loss(pred, true, smooth=1e-5):
     dice = (2 * intersection + smooth) / (union + smooth)
     
     return 1 - dice
+
+
+def dice_loss(pred, true, threshold=0.5, smooth=1e-5):
+    pred = torch.where(pred > threshold, 1, 0)
+
+    return generalized_dice_loss(pred, true, smooth=smooth)
 
 
 def generalized_weighted_dice_loss(pred, true, beta=1, smooth=1e-5):
