@@ -8,10 +8,9 @@ import os
 
 import torch
 import torchvision.transforms as transforms
-from monai.losses import DiceLoss
 
 import config
-from utils import dice_loss, generalized_dice_loss, generalized_weighted_dice_loss
+from utils import GWDiceLoss, BinaryDiceLoss
 from model import UNet
 
 n_samples = 4
@@ -33,9 +32,12 @@ transform = transforms.Compose([
     transforms.Resize((config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
 ])
 
-loss = DiceLoss()
-
 fn_weighting = 2
+threshold = 0.5
+
+binary_dice_loss = BinaryDiceLoss(threshold=threshold)
+generalized_dice_loss = GWDiceLoss()
+generalized_weighted_dice_loss = GWDiceLoss(beta=fn_weighting)
 
 
 if __name__ == "__main__":
@@ -65,9 +67,10 @@ if __name__ == "__main__":
             pred = pred.cpu().squeeze(0).squeeze(0)
             
             # Calculate G DICE loss
-            dice_loss = generalized_dice_loss(pred, mask_tensor)
-            weighted_dice_loss = generalized_weighted_dice_loss(pred, mask_tensor, beta=fn_weighting)
-            
+            bdl = binary_dice_loss(pred, mask_tensor)
+            gdl = generalized_dice_loss(pred, mask_tensor)
+            wgdl = generalized_weighted_dice_loss(pred, mask_tensor)
+
             # Plot original image
             axes[idx, 0].imshow(image, cmap='gray')
             axes[idx, 0].set_title('CT Scan')
@@ -80,7 +83,8 @@ if __name__ == "__main__":
             
             # Plot predicted mask with Dice loss in title
             axes[idx, 2].imshow(pred, cmap='gray')
-            axes[idx, 2].set_title(f'Predicted Mask - Dice loss: {dice_loss:.4f}\nWeighted Dice loss: {weighted_dice_loss:.4f}')
+            axes[idx, 2].set_title(f'Predicted Mask\n \
+Bdl: {bdl:.4f} - Gdl: {gdl:.4f} - WGdl: {wgdl:.4f}')
             axes[idx, 2].axis('off')
             
             # Create combined visualization
