@@ -6,18 +6,15 @@ import os
 import matplotlib
 matplotlib.use('TkAgg')  # or try 'Qt5Agg' if TkAgg doesn't work
 import matplotlib.pyplot as plt
-from verstack.stratified_continuous_split import scsplit
-
-import config
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.utils.data import DataLoader
-from torch.utils.data import Subset
-import torchvision.transforms as transforms
-from dataset import LungDataset # Import custom dataset class
 from monai.losses import DiceLoss
+
+import config
+from dataset import split_data
+from utils import print_time_taken, generalized_weighted_dice_loss
 
 
 class UNet(nn.Module):
@@ -94,66 +91,6 @@ class EarlyStopper:
                 early_stop = True
 
         return early_stop, best_model
-
-
-def split_data(df, batch_size, num_workers):
-    train_transform = transforms.Compose([
-        # transforms.RandomRotation(15),
-        # transforms.RandomHorizontalFlip(),
-        transforms.ColorJitter(brightness=0.2),
-        transforms.ToTensor(), 
-        transforms.Resize((config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
-    ])
-
-    test_transform = transforms.Compose([
-        transforms.ToTensor(), 
-        transforms.Resize((config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
-    ])
-
-    # Validate that dataset split ratios sum to 1
-    total_split = config.TRAIN_SIZE + config.VAL_SIZE + config.TEST_SIZE
-    if not np.isclose(total_split, 1.0, rtol=1e-5):
-        raise ValueError(f"Dataset split ratios must sum to 1.0, but got {total_split} "
-                        f"(train={config.TRAIN_SIZE}, val={config.VAL_SIZE}, test={config.TEST_SIZE})")
-
-    val_ratio = config.VAL_SIZE / (config.VAL_SIZE + config.TEST_SIZE)
-    test_ratio = config.TEST_SIZE / (config.VAL_SIZE + config.TEST_SIZE)
-
-    df_train, df_test = scsplit(
-        df,
-        stratify=df["mask_coverage"],
-        test_size=1-config.TRAIN_SIZE,
-        train_size=config.TRAIN_SIZE,
-        random_state=config.RS,
-    )
-    df_val, df_test = scsplit(
-        df_test,
-        stratify=df_test["mask_coverage"],
-        test_size=val_ratio,
-        train_size=test_ratio,
-        random_state=config.RS,
-    )
-
-    # Save test df for predictions later
-    df_test.to_csv("data/df_test.csv", index=False)
-
-    train_dataset = LungDataset(df_train, config.ROOT_DIR, transform=train_transform)
-    val_dataset = LungDataset(df_val, config.ROOT_DIR, transform=test_transform)
-    test_dataset = LungDataset(df_test, config.ROOT_DIR, transform=test_transform)
-
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
-    
-    return train_loader, val_loader, test_loader
-
-
-def print_time_taken(start_time, end_time):
-    total_seconds = end_time - start_time
-    hours = int(total_seconds // 3600)
-    minutes = int((total_seconds % 3600) // 60)
-    seconds = int(total_seconds % 60)
-    print(f"Training completed in {hours}h {minutes}m {seconds}s")
 
 
 def train(

@@ -5,7 +5,10 @@ import os
 
 from PIL import Image
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
+import torchvision.transforms as transforms
+from verstack.stratified_continuous_split import scsplit
+
 import config
 
 # Iterate over all files in the directories
@@ -57,6 +60,58 @@ class LungDataset(Dataset):
             mask = torch.flip(mask, dims=[1])
 
         return image, mask
+    
+
+def split_data(df, batch_size, num_workers):
+    train_transform = transforms.Compose([
+        # transforms.RandomRotation(15),
+        # transforms.RandomHorizontalFlip(),
+        transforms.ColorJitter(brightness=0.2),
+        transforms.ToTensor(), 
+        transforms.Resize((config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
+    ])
+
+    test_transform = transforms.Compose([
+        transforms.ToTensor(), 
+        transforms.Resize((config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
+    ])
+
+    # Validate that dataset split ratios sum to 1
+    total_split = config.TRAIN_SIZE + config.VAL_SIZE + config.TEST_SIZE
+    if not np.isclose(total_split, 1.0, rtol=1e-5):
+        raise ValueError(f"Dataset split ratios must sum to 1.0, but got {total_split} "
+                        f"(train={config.TRAIN_SIZE}, val={config.VAL_SIZE}, test={config.TEST_SIZE})")
+
+    val_ratio = config.VAL_SIZE / (config.VAL_SIZE + config.TEST_SIZE)
+    test_ratio = config.TEST_SIZE / (config.VAL_SIZE + config.TEST_SIZE)
+
+    df_train, df_test = scsplit(
+        df,
+        stratify=df["mask_coverage"],
+        test_size=1-config.TRAIN_SIZE,
+        train_size=config.TRAIN_SIZE,
+        random_state=config.RS,
+    )
+    df_val, df_test = scsplit(
+        df_test,
+        stratify=df_test["mask_coverage"],
+        test_size=val_ratio,
+        train_size=test_ratio,
+        random_state=config.RS,
+    )
+
+    # Save test df for predictions later
+    df_test.to_csv("data/df_test.csv", index=False)
+
+    train_dataset = LungDataset(df_train, config.ROOT_DIR, transform=train_transform)
+    val_dataset = LungDataset(df_val, config.ROOT_DIR, transform=test_transform)
+    test_dataset = LungDataset(df_test, config.ROOT_DIR, transform=test_transform)
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
+    
+    return train_loader, val_loader, test_loader
 
 
 if __name__ == "__main__":
