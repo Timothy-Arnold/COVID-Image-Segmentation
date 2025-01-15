@@ -3,45 +3,47 @@ import torch.nn as nn
 
 
 class GWDiceLoss(nn.Module):
-    def __init__(self, beta=1, smooth=1e-5):
+    """
+    Generalized Weighted Dice Loss
+    A beta of 1 is the same as regular unweighted Generalized Dice Loss
+    Analogous to Weighted Beta F1 Score, where beta is the weighting factor for false negatives
+    """
+    def __init__(
+        self, 
+        beta=1, 
+        smooth=1e-5
+    ):
         super(GWDiceLoss, self).__init__()
-        self.weighting = (1 + beta ** 2)
+        self.beta = beta
         self.smooth = smooth
     
     def forward(self, pred, true):
-        pred = pred.view(-1)
-        true = true.view(-1)
-        
-        tp = torch.sum(pred * true)
-        fn = torch.sum((1 - pred) * true)
-        fp = torch.sum(pred * (1 - true))
-
-        numerator = self.weighting * tp + self.smooth
-        denominator = self.weighting * tp + (self.weighting - 1) * fn + fp + self.smooth
-        dice = numerator / denominator
-
-        return 1 - dice
-
-
-def generalized_dice_loss(pred, true, smooth=1e-5):
-    pred = pred.view(-1)
-    true = true.view(-1)
+        return generalized_weighted_dice_loss(pred, true, self.beta, self.smooth)
     
-    intersection = torch.sum(pred * true)
-    union = torch.sum(pred) + torch.sum(true)
+
+class BinaryDiceLoss(nn.Module):
+    """
+    Binary Weighted Dice Loss
+    A beta of 1 is the same as regular unweighted Dice Loss, where the predictions are thresholded
+    Analogous to Weighted Beta F1 Score, where beta is the weighting factor for false negatives
+    """
+    def __init__(
+        self, 
+        threshold=0.5, 
+        beta=1, 
+        smooth=1e-5
+    ):
+        super(BinaryDiceLoss, self).__init__()
+        self.threshold = threshold
+        self.beta = beta
+        self.smooth = smooth
     
-    dice = (2 * intersection + smooth) / (union + smooth)
-    
-    return 1 - dice
+    def forward(self, pred, true):
+        pred = torch.where(pred > self.threshold, 1, 0)
+        return generalized_weighted_dice_loss(pred, true, self.beta, self.smooth)
 
 
-def dice_loss(pred, true, threshold=0.5, smooth=1e-5):
-    pred = torch.where(pred > threshold, 1, 0)
-
-    return generalized_dice_loss(pred, true, smooth=smooth)
-
-
-def generalized_weighted_dice_loss(pred, true, beta=1, smooth=1e-5):
+def generalized_weighted_dice_loss(pred, true, beta = 1, smooth=1e-5):
     pred = pred.view(-1)
     true = true.view(-1)
     
@@ -49,7 +51,11 @@ def generalized_weighted_dice_loss(pred, true, beta=1, smooth=1e-5):
     fn = torch.sum((1 - pred) * true)
     fp = torch.sum(pred * (1 - true))
 
-    dice = ((1 + beta ** 2) * tp + smooth) / ((1 + beta ** 2) * tp + beta ** 2 * fn + fp + smooth)
+    weighting = (1 + beta ** 2)
+
+    numerator = weighting * tp + smooth
+    denominator = weighting * tp + (weighting - 1) * fn + fp + smooth
+    dice = numerator / denominator
 
     return 1 - dice
 
