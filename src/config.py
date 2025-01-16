@@ -1,7 +1,7 @@
 import torch
 import os
 
-MODEL_NAME = "unet_smaller_batch_size"
+MODEL_NAME = "unet_wgdl"
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -15,6 +15,7 @@ EARLY_STOPPING_STEPS = 15
 EARLY_STOPPING_MIN_DELTA = 0.001
 IMAGE_WIDTH = 256
 IMAGE_HEIGHT = 256
+FN_WEIGHTING = 2
 
 TRAIN_SIZE = 0.75
 VAL_SIZE = 0.125

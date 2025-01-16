@@ -27,6 +27,7 @@ dist_from_center = np.sqrt((x - center)**2 + (y - center)**2)
 
 circle_mask = dist_from_center < radius
 
+
 class LungDataset(Dataset):
     def __init__(self, df, root_dir, transform=None):
         self.df = df

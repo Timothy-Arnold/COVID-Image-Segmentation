@@ -160,9 +160,9 @@ def train(
         colour_suffix = "\033[0m" if best_model else ""
 
         print(
-f"{colour_prefix}Epoch {epoch} - Average train Dice loss: {average_train_loss:.4f} \
-- Average val Dice loss: {average_val_loss:.4f} \
-- Average test Dice loss: {average_test_loss:.4f}{colour_suffix}")
+f"{colour_prefix}Epoch {epoch} - Train Dice loss: {average_train_loss:.4f} \
+- Val Dice loss: {average_val_loss:.4f} \
+- Test Dice loss: {average_test_loss:.4f}{colour_suffix}")
 
         training_history["train_loss"].append(average_train_loss.item())
         training_history["val_loss"].append(average_val_loss.item())
@@ -262,7 +262,7 @@ if __name__ == "__main__":
     # Train model
     model = UNet(in_channels=config.IN_CHANNELS, out_channels=config.OUT_CHANNELS).to(config.DEVICE)
 
-    loss_fn = GWDiceLoss()
+    loss_fn = GWDiceLoss(beta=config.FN_WEIGHTING)
     optimizer = torch.optim.Adam(model.parameters(), lr=config.LR)
 
     model, training_history = train(
