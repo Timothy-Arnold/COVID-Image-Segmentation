@@ -8,6 +8,7 @@ import os
 
 import torch
 import torchvision.transforms as transforms
+from monai.losses import DiceLoss
 
 import config
 from model import UNet
@@ -15,7 +16,7 @@ from utils import GWDiceLoss, BinaryDiceLoss
 
 
 n_samples = 4
-beta_weighting = 2
+beta = 2
 threshold = 0.5
 random_state = 0
 
@@ -36,8 +37,8 @@ transform = transforms.Compose([
 ])
 
 binary_dice_loss = BinaryDiceLoss(threshold=threshold)
-generalised_dice_loss = GWDiceLoss()
-generalised_weighted_dice_loss = GWDiceLoss(beta=beta_weighting)
+generalised_dice_loss = DiceLoss()
+generalised_weighted_dice_loss = GWDiceLoss(beta=beta)
 
 
 if __name__ == "__main__":

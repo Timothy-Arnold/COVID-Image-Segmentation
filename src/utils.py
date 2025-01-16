@@ -12,11 +12,18 @@ class GWDiceLoss(nn.Module):
         smooth=1e-5
     ):
         super(GWDiceLoss, self).__init__()
-        self.beta = beta
+        self.beta_sq = beta ** 2
         self.smooth = smooth
-    
-    def forward(self, pred, true):
-        return generalised_weighted_dice_loss(pred, true, self.beta, self.smooth)
+
+    def forward(self, pred, target):
+        pred = pred.view(-1)
+        target = target.view(-1)
+        
+        numerator = (self.beta_sq + 1) * torch.sum(pred * target) + self.smooth
+        denominator = self.beta_sq * torch.sum(target) + torch.sum(pred) + self.smooth
+        dice = numerator / denominator
+
+        return 1 - dice
 
 
 class BinaryDiceLoss(nn.Module):
@@ -34,22 +41,22 @@ class BinaryDiceLoss(nn.Module):
         self.beta = beta
         self.smooth = smooth
     
-    def forward(self, pred, true):
+    def forward(self, pred, target):
         pred = torch.where(pred > self.threshold, 1, 0)
-        return generalised_weighted_dice_loss(pred, true, self.beta, self.smooth)
+        return generalised_weighted_dice_loss(pred, target, self.beta, self.smooth)
 
 
-def generalised_weighted_dice_loss(pred, true, beta = 1, smooth=1e-5):
+def generalised_weighted_dice_loss(pred, target, beta=1, smooth=1e-5):
     """
     Analogous to Weighted Beta F1 Score, where beta is the weighting factor for false negatives
     A beta of 1 is the same as regular unweighted generalised Dice Loss
     """
     pred = pred.view(-1)
-    true = true.view(-1)
+    target = target.view(-1)
     
-    tp = torch.sum(pred * true)
-    fn = torch.sum((1 - pred) * true)
-    fp = torch.sum(pred * (1 - true))
+    tp = torch.sum(pred * target)
+    fn = torch.sum((1 - pred) * target)
+    fp = torch.sum(pred * (1 - target))
 
     weighting = (1 + beta ** 2)
 

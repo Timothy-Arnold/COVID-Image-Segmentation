@@ -14,6 +14,7 @@ import torch.nn.functional as F
 import config
 from dataset import split_data
 from utils import GWDiceLoss, print_time_taken
+from monai.losses import DiceLoss
 
 
 class UNet(nn.Module):
@@ -130,7 +131,7 @@ def train(
             loss.backward()
             optimizer.step()
 
-            total_train_loss += loss
+            total_train_loss += loss.item()
 
         with torch.no_grad():
             model.eval()
@@ -140,7 +141,7 @@ def train(
 
                 predictions = model(images)
                 loss = loss_fn(predictions, masks)
-                total_val_loss += loss
+                total_val_loss += loss.item()
 
             for batch in test_loader:
                 images, masks = batch
@@ -148,7 +149,7 @@ def train(
 
                 predictions = model(images)
                 loss = loss_fn(predictions, masks)
-                total_test_loss += loss
+                total_test_loss += loss.item()
 
         average_train_loss = total_train_loss / len(train_loader)
         average_val_loss = total_val_loss / len(val_loader)
@@ -164,9 +165,9 @@ f"{colour_prefix}Epoch {epoch} - Train Dice loss: {average_train_loss:.4f} \
 - Val Dice loss: {average_val_loss:.4f} \
 - Test Dice loss: {average_test_loss:.4f}{colour_suffix}")
 
-        training_history["train_loss"].append(average_train_loss.item())
-        training_history["val_loss"].append(average_val_loss.item())
-        training_history["test_loss"].append(average_test_loss.item())
+        training_history["train_loss"].append(average_train_loss)
+        training_history["val_loss"].append(average_val_loss)
+        training_history["test_loss"].append(average_test_loss)
 
         if early_stop:
             stopped_early = True
@@ -258,12 +259,13 @@ if __name__ == "__main__":
     # Split into train/val/test sets, stratified by mask coverage percentage 
     # in order to ensure that the test set is representative of the population.
     num_workers = 1 #os.cpu_count()
-    train_loader, val_loader, test_loader = split_data(df, config.BATCH_SIZE, num_workers)
+    train_loader, val_loader, test_loader = split_data(df, config.BATCH_SIZE, config.MAX_BATCH_SIZE, num_workers)
 
     # Train model
     model = UNet(in_channels=config.IN_CHANNELS, out_channels=config.OUT_CHANNELS).to(config.DEVICE)
 
     loss_fn = GWDiceLoss(beta=config.BETA_WEIGHTING)
+    # loss_fn = DiceLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config.LR)
 
     model, training_history = train(
