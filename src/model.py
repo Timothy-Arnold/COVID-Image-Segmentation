@@ -155,6 +155,11 @@ def train(
         average_val_loss = total_val_loss / len(val_loader)
         average_test_loss = total_test_loss / len(test_loader)
 
+        lr_scheduler_exp.step()
+        lr_scheduler_plateau.step(average_val_loss)
+        current_lr = optimizer.param_groups[0]['lr']
+        print(f"Current learning rate: ")
+
         early_stop, best_model = early_stopper.early_stop(average_val_loss, model)
 
         colour_prefix = "\033[35m" if best_model else ""
@@ -163,7 +168,8 @@ def train(
         print(
 f"{colour_prefix}Epoch {epoch} - Train Dice loss: {average_train_loss:.4f} \
 - Val Dice loss: {average_val_loss:.4f} \
-- Test Dice loss: {average_test_loss:.4f}{colour_suffix}")
+- Test Dice loss: {average_test_loss:.4f} \
+- Current learning rate: {current_lr:.3e}{colour_suffix}")
 
         training_history["train_loss"].append(average_train_loss)
         training_history["val_loss"].append(average_val_loss)
@@ -258,8 +264,7 @@ if __name__ == "__main__":
     df = pd.read_csv(config.DF_PATH)
     # Split into train/val/test sets, stratified by mask coverage percentage 
     # in order to ensure that the test set is representative of the population.
-    num_workers = 1 #os.cpu_count()
-    train_loader, val_loader, test_loader = split_data(df, config.BATCH_SIZE, config.MAX_BATCH_SIZE, num_workers)
+    train_loader, val_loader, test_loader = split_data(df, config.BATCH_SIZE, config.MAX_BATCH_SIZE, config.NUM_WORKERS)
 
     # Train model
     model = UNet(in_channels=config.IN_CHANNELS, out_channels=config.OUT_CHANNELS).to(config.DEVICE)
@@ -267,6 +272,8 @@ if __name__ == "__main__":
     loss_fn = GWDiceLoss(beta=config.BETA_WEIGHTING)
     # loss_fn = DiceLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config.LR)
+    lr_scheduler_exp = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.99)
+    lr_scheduler_plateau = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=6)
 
     model, training_history = train(
         model, 
