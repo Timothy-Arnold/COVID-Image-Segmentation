@@ -10,6 +10,7 @@ IN_CHANNELS = 1
 OUT_CHANNELS = 1
 LR = 1e-4
 BATCH_SIZE = 16
+MAX_BATCH_SIZE = 32
 MAX_EPOCHS = 200
 EARLY_STOPPING_STEPS = 15
 EARLY_STOPPING_MIN_DELTA = 0.001
@@ -20,7 +21,7 @@ TRAIN_SIZE = 0.75
 VAL_SIZE = 0.125
 TEST_SIZE = 0.125
 
-BETA_WEIGHTING = 2 # Weighting for false negatives, as opposed to false positives
+BETA_WEIGHTING = 1 # Weighting for false negatives, as opposed to false positives
 
 ROOT_DIR = "C:/Users/timcy/Documents/Code/Personal/U-Net/"
 DF_PATH = 'data/df_full.csv'

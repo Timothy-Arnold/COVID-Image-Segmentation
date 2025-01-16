@@ -63,7 +63,7 @@ class LungDataset(Dataset):
         return image, mask
     
 
-def split_data(df, batch_size, num_workers):
+def split_data(df, batch_size, max_batch_size, num_workers):
     train_transform = transforms.Compose([
         # transforms.RandomRotation(15),
         # transforms.RandomHorizontalFlip(),
