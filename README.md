@@ -21,14 +21,10 @@ Ideas tried:
 - Add a bit of data augmentation - random dimming
 - Cutting off corners using a circular mask
 - Flipping scans to all have the same orientation
+- use loss function which penalises false negatives more - BetaWeighted Dice Loss
 
 Ideas to try:
 
-- Use a different version of dice loss, to penalise false negatives more?
-- New architecture?
-
-TODOs 
-- upscale the final mask later down the line, for slightly more accurate dice loss results
+- Upscale the final mask later down the line, for slightly more accurate dice loss results
 - Try more advanced architectures e.g. using attention mechanisms
-- For loss function for penalising false negatives more
 - Improve interpretability of model predictions, perhaps with SHAP or LIME
