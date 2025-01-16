@@ -14,6 +14,8 @@ from utils import GWDiceLoss, BinaryDiceLoss
 from model import UNet
 
 n_samples = 4
+beta_weighting = 2
+threshold = 0.5
 random_state = 0
 
 model_path = config.MODEL_SAVE_PATH
@@ -32,12 +34,9 @@ transform = transforms.Compose([
     transforms.Resize((config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
 ])
 
-fn_weighting = 2
-threshold = 0.5
-
 binary_dice_loss = BinaryDiceLoss(threshold=threshold)
 generalised_dice_loss = GWDiceLoss()
-generalised_weighted_dice_loss = GWDiceLoss(beta=fn_weighting)
+generalised_weighted_dice_loss = GWDiceLoss(beta=beta_weighting)
 
 
 if __name__ == "__main__":

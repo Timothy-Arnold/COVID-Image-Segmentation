@@ -217,6 +217,7 @@ def save_outputs(model, training_history):
         'early_stopping_min_delta': config.EARLY_STOPPING_MIN_DELTA,
         'image_width': config.IMAGE_WIDTH,
         'image_height': config.IMAGE_HEIGHT,
+        'beta_weighting': config.BETA_WEIGHTING,
         'train_size': config.TRAIN_SIZE,
         'val_size': config.VAL_SIZE, 
         'test_size': config.TEST_SIZE
@@ -262,7 +263,7 @@ if __name__ == "__main__":
     # Train model
     model = UNet(in_channels=config.IN_CHANNELS, out_channels=config.OUT_CHANNELS).to(config.DEVICE)
 
-    loss_fn = GWDiceLoss(beta=config.FN_WEIGHTING)
+    loss_fn = GWDiceLoss(beta=config.BETA_WEIGHTING)
     optimizer = torch.optim.Adam(model.parameters(), lr=config.LR)
 
     model, training_history = train(

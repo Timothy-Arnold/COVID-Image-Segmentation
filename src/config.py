@@ -15,11 +15,12 @@ EARLY_STOPPING_STEPS = 15
 EARLY_STOPPING_MIN_DELTA = 0.001
 IMAGE_WIDTH = 256
 IMAGE_HEIGHT = 256
-FN_WEIGHTING = 2
 
 TRAIN_SIZE = 0.75
 VAL_SIZE = 0.125
 TEST_SIZE = 0.125
+
+BETA_WEIGHTING = 2 # Weighting for false negatives, as opposed to false positives
 
 ROOT_DIR = "C:/Users/timcy/Documents/Code/Personal/U-Net/"
 DF_PATH = 'data/df_full.csv'
