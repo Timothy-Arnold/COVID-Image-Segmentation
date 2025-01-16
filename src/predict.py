@@ -36,8 +36,8 @@ fn_weighting = 2
 threshold = 0.5
 
 binary_dice_loss = BinaryDiceLoss(threshold=threshold)
-generalized_dice_loss = GWDiceLoss()
-generalized_weighted_dice_loss = GWDiceLoss(beta=fn_weighting)
+generalised_dice_loss = GWDiceLoss()
+generalised_weighted_dice_loss = GWDiceLoss(beta=fn_weighting)
 
 
 if __name__ == "__main__":
@@ -68,8 +68,8 @@ if __name__ == "__main__":
             
             # Calculate G DICE loss
             bdl = binary_dice_loss(pred, mask_tensor)
-            gdl = generalized_dice_loss(pred, mask_tensor)
-            wgdl = generalized_weighted_dice_loss(pred, mask_tensor)
+            gdl = generalised_dice_loss(pred, mask_tensor)
+            wgdl = generalised_weighted_dice_loss(pred, mask_tensor)
 
             # Plot original image
             axes[idx, 0].imshow(image, cmap='gray')
