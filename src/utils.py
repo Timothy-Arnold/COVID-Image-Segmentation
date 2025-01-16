@@ -17,7 +17,7 @@ class GWDiceLoss(nn.Module):
     
     def forward(self, pred, true):
         return generalised_weighted_dice_loss(pred, true, self.beta, self.smooth)
-    
+
 
 class BinaryDiceLoss(nn.Module):
     """

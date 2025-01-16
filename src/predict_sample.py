@@ -10,8 +10,9 @@ import torch
 import torchvision.transforms as transforms
 
 import config
-from utils import GWDiceLoss, BinaryDiceLoss
 from model import UNet
+from utils import GWDiceLoss, BinaryDiceLoss
+
 
 n_samples = 4
 beta_weighting = 2
