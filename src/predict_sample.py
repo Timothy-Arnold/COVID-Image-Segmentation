@@ -12,7 +12,7 @@ from monai.losses import DiceLoss
 
 import config
 from model import UNet
-from utils import GWDiceLoss, BinaryDiceLoss
+from utils import GWDiceLoss, BWDiceLoss
 
 
 n_samples = 4
@@ -36,7 +36,7 @@ transform = transforms.Compose([
     transforms.Resize((config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
 ])
 
-binary_dice_loss = BinaryDiceLoss(threshold=threshold)
+binary_dice_loss = BWDiceLoss(threshold=threshold)
 generalised_dice_loss = DiceLoss()
 generalised_weighted_dice_loss = GWDiceLoss(beta=beta)
 

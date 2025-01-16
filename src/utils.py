@@ -26,7 +26,7 @@ class GWDiceLoss(nn.Module):
         return 1 - dice
 
 
-class BinaryDiceLoss(nn.Module):
+class BWDiceLoss(nn.Module):
     """
     Binary Weighted Dice Loss, where the predictions are thresholded before calculation
     """
@@ -36,35 +36,22 @@ class BinaryDiceLoss(nn.Module):
         beta=1, 
         smooth=1e-5
     ):
-        super(BinaryDiceLoss, self).__init__()
+        super(BWDiceLoss, self).__init__()
         self.threshold = threshold
-        self.beta = beta
+        self.beta_sq = beta ** 2
         self.smooth = smooth
     
     def forward(self, pred, target):
+        pred = pred.view(-1)
+        target = target.view(-1)
+
         pred = torch.where(pred > self.threshold, 1, 0)
-        return generalised_weighted_dice_loss(pred, target, self.beta, self.smooth)
+        
+        numerator = (self.beta_sq + 1) * torch.sum(pred * target) + self.smooth
+        denominator = self.beta_sq * torch.sum(target) + torch.sum(pred) + self.smooth
+        dice = numerator / denominator
 
-
-def generalised_weighted_dice_loss(pred, target, beta=1, smooth=1e-5):
-    """
-    Analogous to Weighted Beta F1 Score, where beta is the weighting factor for false negatives
-    A beta of 1 is the same as regular unweighted generalised Dice Loss
-    """
-    pred = pred.view(-1)
-    target = target.view(-1)
-    
-    tp = torch.sum(pred * target)
-    fn = torch.sum((1 - pred) * target)
-    fp = torch.sum(pred * (1 - target))
-
-    weighting = (1 + beta ** 2)
-
-    numerator = weighting * tp + smooth
-    denominator = weighting * tp + (weighting - 1) * fn + fp + smooth
-    dice = numerator / denominator
-
-    return 1 - dice
+        return 1 - dice
 
 
 def print_time_taken(start_time, end_time):

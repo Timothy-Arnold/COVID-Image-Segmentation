@@ -1,7 +1,7 @@
 import torch
 import os
 
-MODEL_NAME = "unet_wgdl"
+MODEL_NAME = "unet_gwdl"
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
