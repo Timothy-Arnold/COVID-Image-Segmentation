@@ -4,7 +4,7 @@ import torch.nn as nn
 
 class GWDiceLoss(nn.Module):
     """
-    generalised Weighted Dice Loss
+    Generalised Weighted Dice Loss
     """
     def __init__(
         self, 
@@ -21,7 +21,7 @@ class GWDiceLoss(nn.Module):
 
 class BinaryDiceLoss(nn.Module):
     """
-    Binary Weighted Dice Loss
+    Binary Weighted Dice Loss, where the predictions are thresholded before calculation
     """
     def __init__(
         self, 
@@ -41,8 +41,8 @@ class BinaryDiceLoss(nn.Module):
 
 def generalised_weighted_dice_loss(pred, true, beta = 1, smooth=1e-5):
     """
-    A beta of 1 is the same as regular unweighted generalised Dice Loss, where the predictions are thresholded before calculation
     Analogous to Weighted Beta F1 Score, where beta is the weighting factor for false negatives
+    A beta of 1 is the same as regular unweighted generalised Dice Loss
     """
     pred = pred.view(-1)
     true = true.view(-1)
