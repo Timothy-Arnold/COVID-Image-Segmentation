@@ -155,21 +155,20 @@ def train(
         average_val_loss = total_val_loss / len(val_loader)
         average_test_loss = total_test_loss / len(test_loader)
 
-        lr_scheduler_exp.step()
-        lr_scheduler_plateau.step(average_val_loss)
         current_lr = optimizer.param_groups[0]['lr']
-        print(f"Current learning rate: ")
-
+        lr_scheduler_exp.step()
+        lr_scheduler_plateau1.step(average_val_loss)
+        lr_scheduler_plateau2.step(average_val_loss)
         early_stop, best_model = early_stopper.early_stop(average_val_loss, model)
 
         colour_prefix = "\033[35m" if best_model else ""
         colour_suffix = "\033[0m" if best_model else ""
 
         print(
-f"{colour_prefix}Epoch {epoch} - Train Dice loss: {average_train_loss:.4f} \
-- Val Dice loss: {average_val_loss:.4f} \
-- Test Dice loss: {average_test_loss:.4f} \
-- Current learning rate: {current_lr:.3e}{colour_suffix}")
+f"{colour_prefix}Epoch {epoch} - Train DL: {average_train_loss:.4f} \
+- Val DL: {average_val_loss:.4f} \
+- Test DL: {average_test_loss:.4f} \
+- Current lr: {current_lr:.2e}{colour_suffix}")
 
         training_history["train_loss"].append(average_train_loss)
         training_history["val_loss"].append(average_val_loss)
@@ -273,7 +272,8 @@ if __name__ == "__main__":
     # loss_fn = DiceLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config.LR)
     lr_scheduler_exp = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.99)
-    lr_scheduler_plateau = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=6)
+    lr_scheduler_plateau1 = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
+    lr_scheduler_plateau2 = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10)
 
     model, training_history = train(
         model, 
