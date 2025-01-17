@@ -16,7 +16,7 @@ from utils import GWDiceLoss, BWDiceLoss
 from model import UNet
 
 
-beta_weighting = 2
+beta_weighting = 3
 threshold = 0.5
 
 model_path = config.MODEL_SAVE_PATH

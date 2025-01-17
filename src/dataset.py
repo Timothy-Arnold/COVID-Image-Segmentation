@@ -91,14 +91,14 @@ def split_data(df, batch_size, max_batch_size, num_workers):
         stratify=df["mask_coverage"],
         test_size=1-config.TRAIN_SIZE,
         train_size=config.TRAIN_SIZE,
-        random_state=config.RS,
+        random_state=config.DATA_SPLIT_RS,
     )
     df_val, df_test = scsplit(
         df_test,
         stratify=df_test["mask_coverage"],
         test_size=val_ratio,
         train_size=test_ratio,
-        random_state=config.RS,
+        random_state=config.DATA_SPLIT_RS,
     )
 
     # Save test df for predictions later
@@ -109,8 +109,8 @@ def split_data(df, batch_size, max_batch_size, num_workers):
     test_dataset = LungDataset(df_test, config.ROOT_DIR, transform=test_transform)
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=max_batch_size, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=max_batch_size, shuffle=True)
     
     return train_loader, val_loader, test_loader
 

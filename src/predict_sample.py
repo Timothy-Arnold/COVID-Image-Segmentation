@@ -16,7 +16,7 @@ from utils import GWDiceLoss, BWDiceLoss
 
 
 n_samples = 4
-beta = 2
+beta = 3
 threshold = 0.5
 random_state = 0
 

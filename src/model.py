@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from time import time
+import logging
 import json
 import os
 import matplotlib
@@ -14,7 +15,6 @@ import torch.nn.functional as F
 import config
 from dataset import split_data
 from utils import GWDiceLoss, print_time_taken
-from monai.losses import DiceLoss
 
 
 class UNet(nn.Module):
@@ -156,7 +156,9 @@ def train(
         average_test_loss = total_test_loss / len(test_loader)
 
         current_lr = optimizer.param_groups[0]['lr']
-        lr_scheduler_exp.step()
+        if epoch <= np.log(0.5) / np.log(config.LR_GAMMA): 
+            # Stop decaying after LR is halved
+            lr_scheduler_exp.step()
         lr_scheduler_plateau.step(average_val_loss)
 
         early_stop, best_model = early_stopper.early_stop(average_val_loss, model)
@@ -164,11 +166,12 @@ def train(
         colour_prefix = "\033[35m" if best_model else ""
         colour_suffix = "\033[0m" if best_model else ""
 
-        print(
+        logging.info(
 f"{colour_prefix}Epoch {epoch} - Train DL: {average_train_loss:.4f} \
 - Val DL: {average_val_loss:.4f} \
 - Test DL: {average_test_loss:.4f} \
-- Current lr: {current_lr:.2e}{colour_suffix}")
+- Current lr: {current_lr:.2e}{colour_suffix}"
+        )
 
         training_history["train_loss"].append(average_train_loss)
         training_history["val_loss"].append(average_val_loss)
@@ -209,14 +212,17 @@ def save_outputs(model, training_history):
     plt.xlabel("Epoch #")
     plt.ylabel("Dice loss")
     plt.legend(loc="upper right")
+    plt.title(f"Model: {config.MODEL_NAME}")
     plt.savefig(config.LOSS_PLOT_SAVE_PATH)
 
     hyperparameters = {
         'device': str(config.DEVICE),
-        'random_seed': config.RS,
         'input_channels': config.IN_CHANNELS, 
         'output_channels': config.OUT_CHANNELS,
+        'data_split_random_seed': config.DATA_SPLIT_RS,
+        'model_random_seed': config.MODEL_RS,
         'learning_rate': config.LR,
+        'learning_rate_gamma': config.LR_GAMMA,
         'batch_size': config.BATCH_SIZE,
         'max_epochs': config.MAX_EPOCHS,
         'early_stopping_steps': config.EARLY_STOPPING_STEPS,
@@ -253,26 +259,45 @@ def save_outputs(model, training_history):
 
 if __name__ == "__main__":
     # Set random seeds for reproducibility
-    torch.manual_seed(config.RS)
-    torch.cuda.manual_seed_all(config.RS)
-    np.random.seed(config.RS)
+    torch.manual_seed(config.MODEL_RS)
+    torch.cuda.manual_seed_all(config.MODEL_RS)
+    np.random.seed(config.MODEL_RS)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
+
+    # Set up logging
+    logging.basicConfig(
+        format='%(asctime)s  %(message)s', 
+        datefmt='%Y-%m-%d %H:%M:%S',
+        level=logging.INFO
+    )
 
     # Prepare datasets
     df = pd.read_csv(config.DF_PATH)
     # Split into train/val/test sets, stratified by mask coverage percentage 
     # in order to ensure that the test set is representative of the population.
-    train_loader, val_loader, test_loader = split_data(df, config.BATCH_SIZE, config.MAX_BATCH_SIZE, config.NUM_WORKERS)
+    train_loader, val_loader, test_loader = split_data(
+        df, 
+        config.BATCH_SIZE, 
+        config.MAX_BATCH_SIZE, 
+        config.NUM_WORKERS
+    )
 
     # Train model
     model = UNet(in_channels=config.IN_CHANNELS, out_channels=config.OUT_CHANNELS).to(config.DEVICE)
 
     loss_fn = GWDiceLoss(beta=config.BETA_WEIGHTING)
-    # loss_fn = DiceLoss()s
     optimizer = torch.optim.Adam(model.parameters(), lr=config.LR)
-    lr_scheduler_exp = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.98)
-    lr_scheduler_plateau = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=6)
+    lr_scheduler_exp = torch.optim.lr_scheduler.ExponentialLR(
+        optimizer, 
+        gamma=config.LR_GAMMA
+    )
+    lr_scheduler_plateau = torch.optim.lr_scheduler.ReduceLROnPlateau(
+        optimizer, 
+        mode='min', 
+        factor=0.5, 
+        patience=10
+    )
 
     model, training_history = train(
         model, 
