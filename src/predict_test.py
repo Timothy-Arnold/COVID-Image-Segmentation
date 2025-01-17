@@ -43,7 +43,6 @@ if __name__ == "__main__":
 
     _, _, test_loader = split_data(df, config.BATCH_SIZE, config.MAX_BATCH_SIZE, config.NUM_WORKERS)
 
-    # Collect all images and masks
     all_images = []
     all_masks = []
     for batch in test_loader:
@@ -51,18 +50,18 @@ if __name__ == "__main__":
         all_images.append(images)
         all_masks.append(masks)
 
-    # Combine into single tensors
     all_images = torch.cat(all_images, dim=0)
     all_masks = torch.cat(all_masks, dim=0)
 
-    # Create batches of size 1
+    # Create batches of size 1, for the sake of fully accurate test score
+    # No longer affected by batches of unequal size having equal weighting for final score
     num_samples = len(all_images)
     for i in range(num_samples):
         image = all_images[i:i+1].to(config.DEVICE)
         mask = all_masks[i:i+1].to(config.DEVICE)
 
         pred = model(image)
-        # Calculate Dice losses
+
         bdl = binary_dice_loss(pred, mask)
         gdl = generalised_dice_loss(pred, mask)
         gwdl = generalised_weighted_dice_loss(pred, mask)
