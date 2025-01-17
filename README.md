@@ -22,10 +22,10 @@ Ideas tried:
 - Cutting off corners using a circular mask
 - Flipping scans to all have the same orientation
 - use loss function which penalises false negatives more - BetaWeighted Dice Loss
+- Implement learning rate decay
 
 Ideas to try:
 
-- Implement learning rate decay
 - Upscale the final mask later down the line, for slightly more accurate dice loss results
 - Try more advanced architectures e.g. using attention mechanisms
 - Improve interpretability of model predictions, perhaps with SHAP or LIME

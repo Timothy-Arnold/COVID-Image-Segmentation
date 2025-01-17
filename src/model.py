@@ -157,8 +157,8 @@ def train(
 
         current_lr = optimizer.param_groups[0]['lr']
         lr_scheduler_exp.step()
-        lr_scheduler_plateau1.step(average_val_loss)
-        lr_scheduler_plateau2.step(average_val_loss)
+        lr_scheduler_plateau.step(average_val_loss)
+
         early_stop, best_model = early_stopper.early_stop(average_val_loss, model)
 
         colour_prefix = "\033[35m" if best_model else ""
@@ -269,11 +269,10 @@ if __name__ == "__main__":
     model = UNet(in_channels=config.IN_CHANNELS, out_channels=config.OUT_CHANNELS).to(config.DEVICE)
 
     loss_fn = GWDiceLoss(beta=config.BETA_WEIGHTING)
-    # loss_fn = DiceLoss()
+    # loss_fn = DiceLoss()s
     optimizer = torch.optim.Adam(model.parameters(), lr=config.LR)
-    lr_scheduler_exp = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.99)
-    lr_scheduler_plateau1 = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
-    lr_scheduler_plateau2 = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10)
+    lr_scheduler_exp = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.98)
+    lr_scheduler_plateau = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=6)
 
     model, training_history = train(
         model, 
