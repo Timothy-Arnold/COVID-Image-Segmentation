@@ -17,15 +17,14 @@ Ideas tried:
 - Resizing to 256x256, with larger batch size
 - Adding early stopping
 - Fiddling with batch size, resizing, and LR
-- Remove "out of centre circle" masks, and scans too? Add as part of transform?
 - Add a bit of data augmentation - random dimming
 - Cutting off corners using a circular mask
 - Flipping scans to all have the same orientation
-- use loss function which penalises false negatives more - BetaWeighted Dice Loss
+- Making custom weighted dice loss function which penalises false negatives more
 - Implement learning rate decay
 
 Ideas to try:
 
-- Upscale the final mask later down the line, for slightly more accurate dice loss results
 - Try more advanced architectures e.g. using attention mechanisms
 - Improve interpretability of model predictions, perhaps with SHAP or LIME
+- Upscale the final mask later down the line, for slightly more accurate dice loss results
