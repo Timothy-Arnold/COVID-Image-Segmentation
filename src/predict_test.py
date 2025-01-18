@@ -5,6 +5,7 @@ matplotlib.use('TkAgg')  # or try 'Qt5Agg' if TkAgg doesn't work
 import matplotlib.pyplot as plt
 from PIL import Image
 import os
+import time
 
 import torch
 import torchvision.transforms as transforms
@@ -32,11 +33,12 @@ transform = transforms.Compose([
 ])
 
 binary_dice_loss = BWDiceLoss(threshold=threshold, beta=1)
-generalised_dice_loss = DiceLoss()
+generalised_dice_loss = GWDiceLoss()
 generalised_weighted_dice_loss = GWDiceLoss(beta=beta_weighting)
 
 
 if __name__ == "__main__":
+    start_time = time.time()
     bdl_total = 0
     gdl_total = 0
     gwdl_total = 0
@@ -80,3 +82,5 @@ if __name__ == "__main__":
     print(f"Generalised Weighted Dice Loss: {mean_gwdl}")
     print(f"Jaccard Index / IoU: {jackard}")
 
+    end_time = time.time()
+    print(f"Time taken: {np.round(end_time - start_time, 2)} seconds")
