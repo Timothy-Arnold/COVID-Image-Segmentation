@@ -205,7 +205,9 @@ def save_outputs(model, training_history):
 
     # Plot loss history
     plt.figure(figsize=(12, 7))
-    plt.grid(True)
+    plt.grid(True, which='both', linestyle='-', linewidth=0.5)
+    plt.minorticks_on()
+    plt.grid(True, which='minor', linestyle=':', linewidth=0.25)
     plt.plot(training_history["train_loss"], label="Train Dice loss")
     plt.plot(training_history["val_loss"], label="Val Dice loss")
     plt.plot(training_history["test_loss"], label="Test Dice loss")

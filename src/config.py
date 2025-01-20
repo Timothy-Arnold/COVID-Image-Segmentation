@@ -1,7 +1,7 @@
 import torch
 import os
 
-MODEL_NAME = "unet_weighted"
+MODEL_NAME = "unet_standard_42"
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -10,8 +10,8 @@ OUT_CHANNELS = 1
 DATA_SPLIT_RS = 42
 MODEL_RS = 42
 
-LR = 2e-4
-LR_GAMMA = 0.98
+LR = 3e-4
+LR_GAMMA = 0.97
 BATCH_SIZE = 16
 MAX_BATCH_SIZE = 32
 MAX_EPOCHS = 200
@@ -26,7 +26,7 @@ TRAIN_SIZE = 0.75
 VAL_SIZE = 0.125
 TEST_SIZE = 0.125
 
-BETA_WEIGHTING = 3 # Weighting for false negatives, as opposed to false positives
+BETA_WEIGHTING = 1 # Weighting for false negatives, as opposed to false positives
 
 ROOT_DIR = "C:/Users/timcy/Documents/Code/Personal/U-Net/"
 DF_PATH = 'data/df_full.csv'
