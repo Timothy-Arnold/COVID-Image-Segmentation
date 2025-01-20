@@ -87,6 +87,8 @@ def split_data(df, batch_size, max_batch_size, num_workers):
     val_ratio = config.VAL_SIZE / (config.VAL_SIZE + config.TEST_SIZE)
     test_ratio = config.TEST_SIZE / (config.VAL_SIZE + config.TEST_SIZE)
 
+    # Avoid using verstack's scsplit due to random state not being reproducible
+
     # df_train, df_test = scsplit(
     #     df,
     #     stratify=df["mask_coverage"],
