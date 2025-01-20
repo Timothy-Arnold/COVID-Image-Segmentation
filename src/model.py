@@ -265,7 +265,7 @@ if __name__ == "__main__":
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-    # Set up logging
+    # Set up logging to track training progress over time
     logging.basicConfig(
         format='%(asctime)s  %(message)s', 
         datefmt='%Y-%m-%d %H:%M:%S',
@@ -274,8 +274,7 @@ if __name__ == "__main__":
 
     # Prepare datasets
     df = pd.read_csv(config.DF_PATH)
-    # Split into train/val/test sets, stratified by mask coverage percentage 
-    # in order to ensure that the test set is representative of the population.
+
     train_loader, val_loader, test_loader = split_data(
         df, 
         config.BATCH_SIZE, 
@@ -288,16 +287,9 @@ if __name__ == "__main__":
 
     loss_fn = GWDiceLoss(beta=config.BETA_WEIGHTING)
     optimizer = torch.optim.Adam(model.parameters(), lr=config.LR)
-    lr_scheduler_exp = torch.optim.lr_scheduler.ExponentialLR(
-        optimizer, 
-        gamma=config.LR_GAMMA
-    )
-    lr_scheduler_plateau = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, 
-        mode='min', 
-        factor=0.5, 
-        patience=10
-    )
+
+    lr_scheduler_exp = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=config.LR_GAMMA)
+    lr_scheduler_plateau = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10)
 
     model, training_history = train(
         model, 
