@@ -7,8 +7,8 @@ DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 IN_CHANNELS = 1
 OUT_CHANNELS = 1
-DATA_SPLIT_RS = 0
-MODEL_RS = 0
+DATA_SPLIT_RS = 42
+MODEL_RS = 42
 
 LR = 2e-4
 LR_GAMMA = 0.98

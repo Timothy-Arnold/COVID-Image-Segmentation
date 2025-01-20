@@ -7,6 +7,7 @@ from PIL import Image
 import torch
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
+from sklearn.model_selection import train_test_split
 from verstack.stratified_continuous_split import scsplit
 
 import config
@@ -86,19 +87,33 @@ def split_data(df, batch_size, max_batch_size, num_workers):
     val_ratio = config.VAL_SIZE / (config.VAL_SIZE + config.TEST_SIZE)
     test_ratio = config.TEST_SIZE / (config.VAL_SIZE + config.TEST_SIZE)
 
-    df_train, df_test = scsplit(
-        df,
-        stratify=df["mask_coverage"],
-        test_size=1-config.TRAIN_SIZE,
-        train_size=config.TRAIN_SIZE,
-        random_state=config.DATA_SPLIT_RS,
+    # df_train, df_test = scsplit(
+    #     df,
+    #     stratify=df["mask_coverage"],
+    #     test_size=1-config.TRAIN_SIZE,
+    #     train_size=config.TRAIN_SIZE,
+    #     random_state=config.DATA_SPLIT_RS,
+    # )
+    # df_val, df_test = scsplit(
+    #     df_test,
+    #     stratify=df_test["mask_coverage"],
+    #     test_size=val_ratio,
+    #     train_size=test_ratio,
+    #     random_state=config.DATA_SPLIT_RS,
+    # )
+
+    df_train, df_test = train_test_split(
+        df, 
+        test_size=1-config.TRAIN_SIZE, 
+        shuffle=True,
+        random_state=config.DATA_SPLIT_RS
     )
-    df_val, df_test = scsplit(
-        df_test,
-        stratify=df_test["mask_coverage"],
-        test_size=val_ratio,
-        train_size=test_ratio,
-        random_state=config.DATA_SPLIT_RS,
+
+    df_val, df_test = train_test_split(
+        df_test, 
+        test_size=test_ratio, 
+        shuffle=True,
+        random_state=config.DATA_SPLIT_RS
     )
 
     # Save test df for predictions later
