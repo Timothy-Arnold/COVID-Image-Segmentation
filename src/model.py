@@ -159,7 +159,9 @@ def train(
         if epoch <= np.log(0.5) / np.log(config.LR_GAMMA): 
             # Stop decaying after LR is halved
             lr_scheduler_exp.step()
-        lr_scheduler_plateau.step(average_val_loss)
+        if (epoch == 3) & (average_val_loss > 0.9):
+            print("")
+            lr_scheduler_plateau.step(average_val_loss)
 
         early_stop, best_model = early_stopper.early_stop(average_val_loss, model)
 
@@ -291,7 +293,7 @@ if __name__ == "__main__":
     optimizer = torch.optim.Adam(model.parameters(), lr=config.LR)
 
     lr_scheduler_exp = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=config.LR_GAMMA)
-    lr_scheduler_plateau = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10)
+    lr_scheduler_plateau = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=config.LR_FACTOR, patience=config.LR_PATIENCE)
 
     model, training_history = train(
         model, 
