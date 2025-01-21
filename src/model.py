@@ -155,12 +155,15 @@ def train(
         average_val_loss = total_val_loss / len(val_loader)
         average_test_loss = total_test_loss / len(test_loader)
 
+        if (epoch == 3) & (average_val_loss > 0.9):
+            print("Optimisation not working, stopping early")
+            break
+
         current_lr = optimizer.param_groups[0]['lr']
         if epoch <= np.log(0.5) / np.log(config.LR_GAMMA): 
             # Stop decaying after LR is halved
             lr_scheduler_exp.step()
-        if (epoch == 3) & (average_val_loss > 0.9):
-            print("")
+
             lr_scheduler_plateau.step(average_val_loss)
 
         early_stop, best_model = early_stopper.early_stop(average_val_loss, model)
