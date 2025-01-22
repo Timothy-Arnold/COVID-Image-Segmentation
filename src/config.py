@@ -1,7 +1,7 @@
 import torch
 import os
 
-MODEL_NAME = "unet_standard_42"
+MODEL_NAME = "unet_standard_1234"
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -10,7 +10,7 @@ OUT_CHANNELS = 1
 IMAGE_WIDTH = 256
 IMAGE_HEIGHT = 256
 
-DATA_SPLIT_RS = 123
+DATA_SPLIT_RS = 1
 MODEL_RS = 123
 
 LR = 1e-4
