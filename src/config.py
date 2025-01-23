@@ -1,7 +1,7 @@
 import torch
 import os
 
-MODEL_NAME = "unet_standard_1234"
+MODEL_NAME = "unet_standard_123"
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

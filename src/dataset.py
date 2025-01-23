@@ -84,7 +84,7 @@ def split_data(df, batch_size, max_batch_size, num_workers):
         raise ValueError(f"Dataset split ratios must sum to 1.0, but got {total_split} "
                         f"(train={config.TRAIN_SIZE}, val={config.VAL_SIZE}, test={config.TEST_SIZE})")
 
-    val_ratio = config.VAL_SIZE / (config.VAL_SIZE + config.TEST_SIZE)
+    # val_ratio = config.VAL_SIZE / (config.VAL_SIZE + config.TEST_SIZE)
     test_ratio = config.TEST_SIZE / (config.VAL_SIZE + config.TEST_SIZE)
 
     # Avoid using verstack's scsplit due to random state not being reproducible
