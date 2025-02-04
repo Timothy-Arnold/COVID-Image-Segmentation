@@ -11,7 +11,7 @@ IMAGE_WIDTH = 256
 IMAGE_HEIGHT = 256
 
 DATA_SPLIT_RS = 1
-MODEL_RS = 123
+MODEL_RS = 1
 
 LR = 1e-4
 LR_GAMMA = 0.995
@@ -29,7 +29,7 @@ TRAIN_SIZE = 0.75
 VAL_SIZE = 0.125
 TEST_SIZE = 0.125
 
-BETA_WEIGHTING = 1 # Weighting for false negatives, as opposed to false positives
+BETA_WEIGHTING = 3 # Weighting for false negatives, as opposed to false positives
 
 ROOT_DIR = "C:/Users/timcy/Documents/Code/Personal/U-Net/"
 DF_PATH = 'data/df_full.csv'
