@@ -11,7 +11,7 @@ import torchvision.transforms as transforms
 from monai.losses import DiceLoss
 
 import config
-from model import UNet
+from model_unet import UNet
 from utils import GWDiceLoss, BWDiceLoss
 
 
