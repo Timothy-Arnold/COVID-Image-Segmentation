@@ -14,7 +14,7 @@ from monai.losses import DiceLoss
 import config
 from dataset import split_data
 from utils import GWDiceLoss, BWDiceLoss
-from model import UNet
+from model_unet import UNet
 
 
 beta_weighting = 3
