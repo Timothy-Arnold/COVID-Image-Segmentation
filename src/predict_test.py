@@ -4,12 +4,10 @@ import matplotlib
 matplotlib.use('TkAgg')  # or try 'Qt5Agg' if TkAgg doesn't work
 import matplotlib.pyplot as plt
 from PIL import Image
-import os
 import time
 
 import torch
 import torchvision.transforms as transforms
-from monai.losses import DiceLoss
 
 import config
 from dataset import split_data
@@ -33,7 +31,7 @@ transform = transforms.Compose([
 ])
 
 binary_dice_loss = BWDiceLoss(threshold=threshold, beta=1)
-generalised_dice_loss = GWDiceLoss()
+generalised_dice_loss = GWDiceLoss(beta=1)
 generalised_weighted_dice_loss = GWDiceLoss(beta=beta_weighting)
 
 
