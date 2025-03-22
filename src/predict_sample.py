@@ -10,7 +10,7 @@ import torch
 import torchvision.transforms as transforms
 from monai.losses import DiceLoss
 
-import config
+import src.config_unet as config
 from model_unet import UNet
 from utils import GWDiceLoss, BWDiceLoss
 

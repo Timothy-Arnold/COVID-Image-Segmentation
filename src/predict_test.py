@@ -9,7 +9,7 @@ import time
 import torch
 import torchvision.transforms as transforms
 
-import config
+import src.config_unet as config
 from dataset import split_data
 from utils import GWDiceLoss, BWDiceLoss
 from model_unet import UNet

@@ -10,7 +10,7 @@ import torchvision.transforms as transforms
 from sklearn.model_selection import train_test_split
 from verstack.stratified_continuous_split import scsplit
 
-import config
+import src.config_unet as config
 
 # Iterate over all files in the directories
 scans = [f"data/scans/{scan}" for scan in os.listdir(config.ROOT_DIR + "data/scans/")]

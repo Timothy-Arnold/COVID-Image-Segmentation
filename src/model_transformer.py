@@ -12,7 +12,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import config
+import src.config_trans as config
 from dataset import split_data
 from utils import GWDiceLoss, print_time_taken
 
