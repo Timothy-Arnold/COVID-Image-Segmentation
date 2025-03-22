@@ -17,9 +17,9 @@ from dataset import split_data
 from utils import GWDiceLoss, print_time_taken
 
 
-class UNet(nn.Module):
+class ViT(nn.Module):
     def __init__(self, in_channels=1, out_channels=1):
-        super(UNet, self).__init__()
+        super(ViT, self).__init__()
 
         self.enc1 = self.conv_block(in_channels, 64)
         self.enc2 = self.conv_block(64, 128)
@@ -294,7 +294,7 @@ if __name__ == "__main__":
     )
 
     # Train model
-    model = UNet(in_channels=config.IN_CHANNELS, out_channels=config.OUT_CHANNELS).to(config.DEVICE)
+    model = ViT(in_channels=config.IN_CHANNELS, out_channels=config.OUT_CHANNELS).to(config.DEVICE)
 
     loss_fn = GWDiceLoss(beta=config.BETA_WEIGHTING)
     optimizer = torch.optim.Adam(model.parameters(), lr=config.LR)
