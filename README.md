@@ -9,6 +9,7 @@ Papers read and used:
 
 - https://arxiv.org/abs/1707.03237
 - https://arxiv.org/abs/1505.04597
+- https://arxiv.org/pdf/2010.11929
 
 Ideas tried:
 
