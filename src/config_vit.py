@@ -3,13 +3,21 @@ import os
 
 MODEL_NAME = "vit_0"
 
-LR = 1e-4
+MODEL_TYPE = "vit"
+
+LR = 4e-4
 LR_GAMMA = 0.995
 LR_PATIENCE = 10
 LR_FACTOR = 0.5
 MAX_EPOCHS = 200
 EARLY_STOPPING_STEPS = 20
 EARLY_STOPPING_MIN_DELTA = 0.001
+
+PATCH_SIZE = 16
+EMBED_SIZE = 768
+NUM_BLOCKS = 12
+NUM_HEADS = 8
+DROPOUT = 0.2
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -18,7 +26,7 @@ OUT_CHANNELS = 1
 IMAGE_WIDTH = 256
 IMAGE_HEIGHT = 256
 
-DATA_SPLIT_RS = 0
+DATA_SPLIT_RS = 1
 MODEL_RS = 0
 
 BATCH_SIZE = 16
@@ -29,11 +37,11 @@ TRAIN_SIZE = 0.75
 VAL_SIZE = 0.125
 TEST_SIZE = 0.125
 
-BETA_WEIGHTING = 3 # Weighting for false negatives, as opposed to false positives
+BETA_WEIGHTING = 1 # Weighting for false negatives, as opposed to false positives
 
 ROOT_DIR = "C:/Users/timcy/Documents/Code/Personal/U-Net/"
 DF_PATH = 'data/df_full.csv'
 DF_TEST_PATH = 'data/df_test.csv'
-LOSS_PLOT_SAVE_PATH = f'output/{MODEL_NAME}/loss_plot.png'
-HYPER_PARAM_SAVE_PATH = f'output/{MODEL_NAME}/hyper_params.json'
-MODEL_SAVE_PATH = f'output/{MODEL_NAME}/trained.pth'
+LOSS_PLOT_SAVE_PATH = f'output/{MODEL_TYPE}/{MODEL_NAME}/loss_plot.png'
+HYPER_PARAM_SAVE_PATH = f'output/{MODEL_TYPE}/{MODEL_NAME}/hyper_params.json'
+MODEL_SAVE_PATH = f'output/{MODEL_TYPE}/{MODEL_NAME}/trained.pth'

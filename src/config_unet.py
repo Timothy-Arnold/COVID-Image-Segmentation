@@ -3,6 +3,8 @@ import os
 
 MODEL_NAME = "unet_standard_0"
 
+MODEL_TYPE = "unet"
+
 LR = 1e-4
 LR_GAMMA = 0.995
 LR_PATIENCE = 10
@@ -34,6 +36,7 @@ BETA_WEIGHTING = 3 # Weighting for false negatives, as opposed to false positive
 ROOT_DIR = "C:/Users/timcy/Documents/Code/Personal/U-Net/"
 DF_PATH = 'data/df_full.csv'
 DF_TEST_PATH = 'data/df_test.csv'
-LOSS_PLOT_SAVE_PATH = f'output/{MODEL_NAME}/loss_plot.png'
-HYPER_PARAM_SAVE_PATH = f'output/{MODEL_NAME}/hyper_params.json'
-MODEL_SAVE_PATH = f'output/{MODEL_NAME}/trained.pth'
+LOSS_PLOT_SAVE_PATH = f'output/{MODEL_TYPE}/{MODEL_NAME}/loss_plot.png'
+HYPER_PARAM_SAVE_PATH = f'output/{MODEL_TYPE}/{MODEL_NAME}/hyper_params.json'
+MODEL_SAVE_PATH = f'output/{MODEL_TYPE}/{MODEL_NAME}/trained.pth'
+

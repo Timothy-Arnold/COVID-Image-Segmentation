@@ -12,7 +12,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import src.config_unet as config_unet
+import src.config_vit as config_vit
 from src.data.dataset import split_data
 from src.utils.utils import GWDiceLoss, print_time_taken
 
@@ -126,7 +126,7 @@ class ViT(nn.Module):
         self.num_heads = num_heads
         self.dropout = dropout
 
-        heads = [ SelfAttentionEncoderBlock(embed_size, num_heads, dropout) for i in range(num_blocks) ]
+        heads = [SelfAttentionEncoderBlock(embed_size, num_heads, dropout) for i in range(num_blocks)]
         self.layers = nn.Sequential(
             nn.BatchNorm2d(num_features=in_channels),
             ViTInput(image_size, patch_size, in_channels, embed_size),
@@ -179,13 +179,13 @@ def train(
         "val_loss": [1],
         "test_loss": [1],
     }
-    early_stopper = EarlyStopper(patience=config_unet.EARLY_STOPPING_STEPS, min_delta=0)
+    early_stopper = EarlyStopper(patience=config_vit.EARLY_STOPPING_STEPS, min_delta=0)
 
     stopped_early = False
 
     start_time = time()
-    print(f"Training '{config_unet.MODEL_NAME}'! Max Epochs: {config_unet.MAX_EPOCHS}, Early Stopping Steps: {config_unet.EARLY_STOPPING_STEPS}")
-    for epoch in range(1, config_unet.MAX_EPOCHS + 1):
+    print(f"Training '{config_vit.MODEL_NAME}'! Max Epochs: {config_vit.MAX_EPOCHS}, Early Stopping Steps: {config_vit.EARLY_STOPPING_STEPS}")
+    for epoch in range(1, config_vit.MAX_EPOCHS + 1):
         model.train()
         total_train_loss = 0
         total_val_loss = 0
@@ -193,7 +193,7 @@ def train(
 
         for batch in train_loader:
             images, masks = batch
-            images, masks = images.to(config_unet.DEVICE), masks.to(config_unet.DEVICE)
+            images, masks = images.to(config_vit.DEVICE), masks.to(config_vit.DEVICE)
 
             predictions = model(images)
             loss = loss_fn(predictions, masks)
@@ -208,7 +208,7 @@ def train(
             model.eval()
             for batch in val_loader:
                 images, masks = batch
-                images, masks = images.to(config_unet.DEVICE), masks.to(config_unet.DEVICE)
+                images, masks = images.to(config_vit.DEVICE), masks.to(config_vit.DEVICE)
 
                 predictions = model(images)
                 loss = loss_fn(predictions, masks)
@@ -216,7 +216,7 @@ def train(
 
             for batch in test_loader:
                 images, masks = batch
-                images, masks = images.to(config_unet.DEVICE), masks.to(config_unet.DEVICE)
+                images, masks = images.to(config_vit.DEVICE), masks.to(config_vit.DEVICE)
 
                 predictions = model(images)
                 loss = loss_fn(predictions, masks)
@@ -233,7 +233,7 @@ def train(
         current_lr = optimizer.param_groups[0]['lr']
 
         # Stop decaying after LR is halved:
-        if epoch <= np.log(0.5) / np.log(config_unet.LR_GAMMA): 
+        if epoch <= np.log(0.5) / np.log(config_vit.LR_GAMMA): 
             lr_scheduler_exp.step()
             lr_scheduler_plateau.step(average_val_loss)
 
@@ -255,7 +255,7 @@ f"{colour_prefix}Epoch {epoch} - Train DL: {average_train_loss:.4f} \
 
         if early_stop:
             stopped_early = True
-            print(f"Early stopping triggered after {epoch} epochs - No improvement for {config_unet.EARLY_STOPPING_STEPS} epochs")
+            print(f"Early stopping triggered after {epoch} epochs - No improvement for {config_vit.EARLY_STOPPING_STEPS} epochs")
             break
 
     if not stopped_early:
@@ -276,8 +276,8 @@ f"{colour_prefix}Epoch {epoch} - Train DL: {average_train_loss:.4f} \
 
 def save_outputs(model, training_history):
     # Create output directory if it doesn't exist
-    if not os.path.exists(f'output/{config_unet.MODEL_NAME}'):
-        os.makedirs(f'output/{config_unet.MODEL_NAME}')
+    if not os.path.exists(f'output/{config_vit.MODEL_NAME}'):
+        os.makedirs(f'output/{config_vit.MODEL_NAME}')
 
     # Plot loss history
     plt.figure(figsize=(12, 7))
@@ -290,31 +290,36 @@ def save_outputs(model, training_history):
     plt.xlabel("Epoch #")
     plt.ylabel("Dice loss")
     plt.legend(loc="upper right")
-    plt.title(f"Model: {config_unet.MODEL_NAME}")
-    plt.savefig(config_unet.LOSS_PLOT_SAVE_PATH)
+    plt.title(f"Model: {config_vit.MODEL_NAME}")
+    plt.savefig(config_vit.LOSS_PLOT_SAVE_PATH)
 
     hyperparameters = {
-        'device': str(config_unet.DEVICE),
-        'input_channels': config_unet.IN_CHANNELS, 
-        'output_channels': config_unet.OUT_CHANNELS,
-        'image_width': config_unet.IMAGE_WIDTH,
-        'image_height': config_unet.IMAGE_HEIGHT,
-        'data_split_random_seed': config_unet.DATA_SPLIT_RS,
-        'model_random_seed': config_unet.MODEL_RS,
-        'learning_rate': config_unet.LR,
-        'learning_rate_gamma': config_unet.LR_GAMMA,
-        'learning_rate_patience': config_unet.LR_PATIENCE,
-        'learning_rate_factor': config_unet.LR_FACTOR,
-        'max_epochs': config_unet.MAX_EPOCHS,
-        'early_stopping_steps': config_unet.EARLY_STOPPING_STEPS,
-        'early_stopping_min_delta': config_unet.EARLY_STOPPING_MIN_DELTA,
-        'batch_size': config_unet.BATCH_SIZE,
-        'max_batch_size': config_unet.MAX_BATCH_SIZE,
-        'num_workers': config_unet.NUM_WORKERS,
-        'train_size': config_unet.TRAIN_SIZE,
-        'val_size': config_unet.VAL_SIZE, 
-        'test_size': config_unet.TEST_SIZE,
-        'beta_weighting': config_unet.BETA_WEIGHTING,
+        'device': str(config_vit.DEVICE),
+        'input_channels': config_vit.IN_CHANNELS, 
+        'output_channels': config_vit.OUT_CHANNELS,
+        'image_width': config_vit.IMAGE_WIDTH,
+        'image_height': config_vit.IMAGE_HEIGHT,
+        'data_split_random_seed': config_vit.DATA_SPLIT_RS,
+        'model_random_seed': config_vit.MODEL_RS,
+        'learning_rate': config_vit.LR,
+        'learning_rate_gamma': config_vit.LR_GAMMA,
+        'learning_rate_patience': config_vit.LR_PATIENCE,
+        'learning_rate_factor': config_vit.LR_FACTOR,
+        'max_epochs': config_vit.MAX_EPOCHS,
+        'early_stopping_steps': config_vit.EARLY_STOPPING_STEPS,
+        'early_stopping_min_delta': config_vit.EARLY_STOPPING_MIN_DELTA,
+        'batch_size': config_vit.BATCH_SIZE,
+        'max_batch_size': config_vit.MAX_BATCH_SIZE,
+        'num_workers': config_vit.NUM_WORKERS,
+        'train_size': config_vit.TRAIN_SIZE,
+        'val_size': config_vit.VAL_SIZE, 
+        'test_size': config_vit.TEST_SIZE,
+        'beta_weighting': config_vit.BETA_WEIGHTING,
+        'patch_size': config_vit.PATCH_SIZE,
+        'embed_size': config_vit.EMBED_SIZE,
+        'num_blocks': config_vit.NUM_BLOCKS,
+        'num_heads': config_vit.NUM_HEADS,
+        'dropout': config_vit.DROPOUT,
     }
 
     # Find results of model which performed best on validation set
@@ -333,17 +338,17 @@ def save_outputs(model, training_history):
         "results": results,
     }
 
-    with open(config_unet.HYPER_PARAM_SAVE_PATH, 'w') as f:
+    with open(config_vit.HYPER_PARAM_SAVE_PATH, 'w') as f:
         json.dump(overall_result, f, indent=4)
 
-    torch.save(model, config_unet.MODEL_SAVE_PATH)
+    torch.save(model, config_vit.MODEL_SAVE_PATH)
 
 
 if __name__ == "__main__":
     # Set random seeds for reproducibility
-    torch.manual_seed(config_unet.MODEL_RS)
-    torch.cuda.manual_seed_all(config_unet.MODEL_RS)
-    np.random.seed(config_unet.MODEL_RS)
+    torch.manual_seed(config_vit.MODEL_RS)
+    torch.cuda.manual_seed_all(config_vit.MODEL_RS)
+    np.random.seed(config_vit.MODEL_RS)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
@@ -355,23 +360,32 @@ if __name__ == "__main__":
     )
 
     # Prepare datasets
-    df = pd.read_csv(config_unet.DF_PATH)
+    df = pd.read_csv(config_vit.DF_PATH)
 
     train_loader, val_loader, test_loader = split_data(
         df, 
-        config_unet.BATCH_SIZE, 
-        config_unet.MAX_BATCH_SIZE, 
-        config_unet.NUM_WORKERS
+        config_vit.BATCH_SIZE, 
+        config_vit.MAX_BATCH_SIZE, 
+        config_vit.NUM_WORKERS
     )
 
     # Train model
-    model = ViT(in_channels=config_unet.IN_CHANNELS, out_channels=config_unet.OUT_CHANNELS).to(config_unet.DEVICE)
+    model = ViT(
+        image_size=config_vit.IMAGE_HEIGHT,
+        patch_size=config_vit.PATCH_SIZE,
+        in_channels=config_vit.IN_CHANNELS, 
+        out_channels=config_vit.OUT_CHANNELS,
+        embed_size=config_vit.EMBED_SIZE,
+        num_blocks=config_vit.NUM_BLOCKS,
+        num_heads=config_vit.NUM_HEADS,
+        dropout=config_vit.DROPOUT
+    ).to(config_vit.DEVICE)
 
-    loss_fn = GWDiceLoss(beta=config_unet.BETA_WEIGHTING)
-    optimizer = torch.optim.Adam(model.parameters(), lr=config_unet.LR)
+    loss_fn = GWDiceLoss(beta=config_vit.BETA_WEIGHTING)
+    optimizer = torch.optim.Adam(model.parameters(), lr=config_vit.LR)
 
-    lr_scheduler_exp = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=config_unet.LR_GAMMA)
-    lr_scheduler_plateau = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=config_unet.LR_FACTOR, patience=config_unet.LR_PATIENCE)
+    lr_scheduler_exp = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=config_vit.LR_GAMMA)
+    lr_scheduler_plateau = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, factor=config_vit.LR_FACTOR, patience=config_vit.LR_PATIENCE)
 
     model, training_history = train(
         model, 

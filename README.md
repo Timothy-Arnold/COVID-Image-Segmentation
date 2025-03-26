@@ -23,9 +23,9 @@ Ideas tried:
 - Flipping scans to all have the same orientation
 - Making custom weighted dice loss function which penalises false negatives more
 - Implement learning rate decay
+- Try different architectures e.g. Vision Transformers, Mask2Former
 
 Ideas to try:
 
-- Try more advanced architectures e.g. using attention mechanisms
-- Improve interpretability of model predictions, perhaps with SHAP or LIME
+- Improve interpretability of model predictions, perhaps with SHAP or LIME, or attention patterns
 - Upscale the final mask later down the line, for slightly more accurate dice loss results

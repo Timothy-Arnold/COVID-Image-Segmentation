@@ -10,7 +10,7 @@ import torch
 import torchvision.transforms as transforms
 from monai.losses import DiceLoss
 
-import src.config as config
+import src.config_unet as config_unet
 from src.model.model_unet import UNet
 from src.utils.utils import GWDiceLoss, BWDiceLoss
 
@@ -20,8 +20,8 @@ beta = 3
 threshold = 0.5
 random_state = 0
 
-model_path = config.MODEL_SAVE_PATH
-df = pd.read_csv(config.DF_TEST_PATH)
+model_path = config_unet.MODEL_SAVE_PATH
+df = pd.read_csv(config_unet.DF_TEST_PATH)
 df_sample = df.sample(n=n_samples, random_state=random_state).reset_index(drop=True)
 
 fig, axes = plt.subplots(n_samples, 4, figsize=(20, 4*n_samples))
@@ -29,11 +29,11 @@ fig, axes = plt.subplots(n_samples, 4, figsize=(20, 4*n_samples))
 
 model = torch.load(model_path)
 model.eval()
-model = model.to(config.DEVICE)
+model = model.to(config_unet.DEVICE)
 
 transform = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Resize((config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
+    transforms.Resize((config_unet.IMAGE_WIDTH, config_unet.IMAGE_HEIGHT))
 ])
 
 binary_dice_loss = BWDiceLoss(threshold=threshold)
@@ -45,11 +45,11 @@ if __name__ == "__main__":
     with torch.no_grad():
         for idx, row in enumerate(df_sample.itertuples()):
             # Load and transform image
-            image_path = os.path.join(config.ROOT_DIR, row.scan)
+            image_path = os.path.join(config_unet.ROOT_DIR, row.scan)
             image = Image.open(image_path).convert("L")
             
             # Load and transform mask 
-            mask_path = os.path.join(config.ROOT_DIR, row.mask)
+            mask_path = os.path.join(config_unet.ROOT_DIR, row.mask)
             mask = Image.open(mask_path).convert("L")
 
             if os.path.basename(image_path).startswith("Jun_radiopaedia"):
@@ -60,7 +60,7 @@ if __name__ == "__main__":
                 mask = np.flipud(mask)
                 mask = Image.fromarray(mask)
 
-            image_tensor = transform(image).unsqueeze(0).to(config.DEVICE)
+            image_tensor = transform(image).unsqueeze(0).to(config_unet.DEVICE)
             mask_tensor = transform(mask).squeeze(0)
             
             # Get prediction

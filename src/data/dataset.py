@@ -10,11 +10,11 @@ import torchvision.transforms as transforms
 from sklearn.model_selection import train_test_split
 from verstack.stratified_continuous_split import scsplit
 
-import src.config as config
+import src.config_unet as config_unet
 
 # Iterate over all files in the directories
-scans = [f"data/scans/{scan}" for scan in os.listdir(config.ROOT_DIR + "data/scans/")]
-masks = [f"data/masks/{mask}" for mask in os.listdir(config.ROOT_DIR + "data/masks/")]
+scans = [f"data/scans/{scan}" for scan in os.listdir(config_unet.ROOT_DIR + "data/scans/")]
+masks = [f"data/masks/{mask}" for mask in os.listdir(config_unet.ROOT_DIR + "data/masks/")]
 
 # Create circle mask
 dimension_size = 512
@@ -70,22 +70,22 @@ def split_data(df, batch_size, max_batch_size, num_workers):
         # transforms.RandomHorizontalFlip(),
         transforms.ColorJitter(brightness=0.2),
         transforms.ToTensor(), 
-        transforms.Resize((config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
+        transforms.Resize((config_unet.IMAGE_WIDTH, config_unet.IMAGE_HEIGHT))
     ])
 
     test_transform = transforms.Compose([
         transforms.ToTensor(), 
-        transforms.Resize((config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
+        transforms.Resize((config_unet.IMAGE_WIDTH, config_unet.IMAGE_HEIGHT))
     ])
 
     # Validate that dataset split ratios sum to 1
-    total_split = config.TRAIN_SIZE + config.VAL_SIZE + config.TEST_SIZE
+    total_split = config_unet.TRAIN_SIZE + config_unet.VAL_SIZE + config_unet.TEST_SIZE
     if not np.isclose(total_split, 1.0, rtol=1e-5):
         raise ValueError(f"Dataset split ratios must sum to 1.0, but got {total_split} "
-                        f"(train={config.TRAIN_SIZE}, val={config.VAL_SIZE}, test={config.TEST_SIZE})")
+                        f"(train={config_unet.TRAIN_SIZE}, val={config_unet.VAL_SIZE}, test={config_unet.TEST_SIZE})")
 
     # val_ratio = config.VAL_SIZE / (config.VAL_SIZE + config.TEST_SIZE)
-    test_ratio = config.TEST_SIZE / (config.VAL_SIZE + config.TEST_SIZE)
+    test_ratio = config_unet.TEST_SIZE / (config_unet.VAL_SIZE + config_unet.TEST_SIZE)
 
     # Avoid using verstack's scsplit due to random state not being reproducible
 
@@ -106,24 +106,24 @@ def split_data(df, batch_size, max_batch_size, num_workers):
 
     df_train, df_test = train_test_split(
         df, 
-        test_size=1-config.TRAIN_SIZE, 
+        test_size=1-config_unet.TRAIN_SIZE, 
         shuffle=True,
-        random_state=config.DATA_SPLIT_RS
+        random_state=config_unet.DATA_SPLIT_RS
     )
 
     df_val, df_test = train_test_split(
         df_test, 
         test_size=test_ratio, 
         shuffle=True,
-        random_state=config.DATA_SPLIT_RS
+        random_state=config_unet.DATA_SPLIT_RS
     )
 
     # Save test df for predictions later
     df_test.to_csv("data/df_test.csv", index=False)
 
-    train_dataset = LungDataset(df_train, config.ROOT_DIR, transform=train_transform)
-    val_dataset = LungDataset(df_val, config.ROOT_DIR, transform=test_transform)
-    test_dataset = LungDataset(df_test, config.ROOT_DIR, transform=test_transform)
+    train_dataset = LungDataset(df_train, config_unet.ROOT_DIR, transform=train_transform)
+    val_dataset = LungDataset(df_val, config_unet.ROOT_DIR, transform=test_transform)
+    test_dataset = LungDataset(df_test, config_unet.ROOT_DIR, transform=test_transform)
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=max_batch_size, shuffle=True)

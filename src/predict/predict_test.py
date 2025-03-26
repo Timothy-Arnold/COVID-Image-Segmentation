@@ -9,7 +9,7 @@ import time
 import torch
 import torchvision.transforms as transforms
 
-import src.config as config
+import src.config_unet as config_unet
 from src.data.dataset import split_data
 from src.utils.utils import GWDiceLoss, BWDiceLoss
 from src.model.model_unet import UNet
@@ -18,16 +18,16 @@ from src.model.model_unet import UNet
 beta_weighting = 3
 threshold = 0.5
 
-model_path = config.MODEL_SAVE_PATH
-df = pd.read_csv(config.DF_PATH)
+model_path = config_unet.MODEL_SAVE_PATH
+df = pd.read_csv(config_unet.DF_PATH)
 
 model = torch.load(model_path)
 model.eval()
-model = model.to(config.DEVICE)
+model = model.to(config_unet.DEVICE)
 
 transform = transforms.Compose([
     transforms.ToTensor(),
-    transforms.Resize((config.IMAGE_WIDTH, config.IMAGE_HEIGHT))
+    transforms.Resize((config_unet.IMAGE_WIDTH, config_unet.IMAGE_HEIGHT))
 ])
 
 binary_dice_loss = BWDiceLoss(threshold=threshold, beta=1)
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     gdl_total = 0
     gwdl_total = 0
 
-    _, _, test_loader = split_data(df, config.BATCH_SIZE, config.MAX_BATCH_SIZE, config.NUM_WORKERS)
+    _, _, test_loader = split_data(df, config_unet.BATCH_SIZE, config_unet.MAX_BATCH_SIZE, config_unet.NUM_WORKERS)
 
     all_images = []
     all_masks = []
@@ -57,8 +57,8 @@ if __name__ == "__main__":
     # No longer affected by batches of unequal size having equal weighting for final score
     num_samples = len(all_images)
     for i in range(num_samples):
-        image = all_images[i:i+1].to(config.DEVICE)
-        mask = all_masks[i:i+1].to(config.DEVICE)
+        image = all_images[i:i+1].to(config_unet.DEVICE)
+        mask = all_masks[i:i+1].to(config_unet.DEVICE)
 
         pred = model(image)
 
