@@ -12,14 +12,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-import src.config_trans as config
-from dataset import split_data
-from utils import GWDiceLoss, print_time_taken
+import src.config as config
+from src.data.dataset import split_data
+from src.utils.utils import GWDiceLoss, print_time_taken
 
 
-class ViT(nn.Module):
+class UNet(nn.Module):
     def __init__(self, in_channels=1, out_channels=1):
-        super(ViT, self).__init__()
+        super(UNet, self).__init__()
 
         self.enc1 = self.conv_block(in_channels, 64)
         self.enc2 = self.conv_block(64, 128)
@@ -294,7 +294,7 @@ if __name__ == "__main__":
     )
 
     # Train model
-    model = ViT(in_channels=config.IN_CHANNELS, out_channels=config.OUT_CHANNELS).to(config.DEVICE)
+    model = UNet(in_channels=config.IN_CHANNELS, out_channels=config.OUT_CHANNELS).to(config.DEVICE)
 
     loss_fn = GWDiceLoss(beta=config.BETA_WEIGHTING)
     optimizer = torch.optim.Adam(model.parameters(), lr=config.LR)

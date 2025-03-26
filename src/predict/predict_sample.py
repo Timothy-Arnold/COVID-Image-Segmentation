@@ -10,9 +10,9 @@ import torch
 import torchvision.transforms as transforms
 from monai.losses import DiceLoss
 
-import src.config_unet as config
-from model_unet import UNet
-from utils import GWDiceLoss, BWDiceLoss
+import src.config as config
+from src.model.model_unet import UNet
+from src.utils.utils import GWDiceLoss, BWDiceLoss
 
 
 n_samples = 4

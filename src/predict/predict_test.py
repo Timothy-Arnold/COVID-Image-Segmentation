@@ -9,10 +9,10 @@ import time
 import torch
 import torchvision.transforms as transforms
 
-import src.config_unet as config
-from dataset import split_data
-from utils import GWDiceLoss, BWDiceLoss
-from model_unet import UNet
+import src.config as config
+from src.data.dataset import split_data
+from src.utils.utils import GWDiceLoss, BWDiceLoss
+from src.model.model_unet import UNet
 
 
 beta_weighting = 3
