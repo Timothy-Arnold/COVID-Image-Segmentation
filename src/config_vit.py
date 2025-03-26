@@ -4,7 +4,7 @@ MODEL_NAME = "first"
 
 MODEL_TYPE = "vit"
 
-LR = 3e-4
+LR = 5e-4
 LR_GAMMA = 0.995
 LR_PATIENCE = 10
 LR_FACTOR = 0.5
@@ -13,10 +13,10 @@ EARLY_STOPPING_STEPS = 20
 EARLY_STOPPING_MIN_DELTA = 0.001
 
 PATCH_SIZE = 16
-EMBED_SIZE = 768
+EMBED_SIZE = 256
 NUM_BLOCKS = 12
 NUM_HEADS = 8
-DROPOUT = 0.2
+DROPOUT = 0.15
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -25,7 +25,7 @@ OUT_CHANNELS = 1
 IMAGE_WIDTH = 256
 IMAGE_HEIGHT = 256
 
-DATA_SPLIT_RS = 0
+DATA_SPLIT_RS = 1
 MODEL_RS = 1
 
 BATCH_SIZE = 16
@@ -38,7 +38,7 @@ TEST_SIZE = 0.125
 
 BETA_WEIGHTING = 1 # Weighting for false negatives, as opposed to false positives
 
-ROOT_DIR = "C:/Users/timcy/Documents/Code/Personal/U-Net/"
+ROOT_DIR = "C:/Users/timcy/Documents/Code/Personal/COVID-Image-Segmentation/"
 DF_PATH = 'data/df_full.csv'
 DF_TEST_PATH = 'data/df_test.csv'
 FOLDER_PATH = f'output/{MODEL_TYPE}/{MODEL_NAME}'

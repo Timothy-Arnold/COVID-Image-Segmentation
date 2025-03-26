@@ -2,11 +2,6 @@ import numpy as np
 import pandas as pd
 from time import time
 import logging
-import json
-import os
-import matplotlib
-matplotlib.use('TkAgg')  # or try 'Qt5Agg' if TkAgg doesn't work
-import matplotlib.pyplot as plt
 
 import torch
 import torch.nn as nn
@@ -15,6 +10,7 @@ import torch.nn.functional as F
 import src.config_vit as config_vit
 from src.data.dataset import split_data
 from src.utils.utils import GWDiceLoss, print_time_taken
+from src.model.model_utils import EarlyStopper, save_outputs
 
 
 class ImageToPatches(nn.Module):
@@ -40,7 +36,6 @@ class PatchEmbedding(nn.Module):
     
     def forward(self, x):
         assert len(x.size()) == 3
-        # B, T, C = x.size()
         x = self.embed_layer(x)
         return x
 
@@ -97,7 +92,6 @@ class OutputProjection(nn.Module):
         self.output_dims = output_dims
         self.projection = nn.Linear(embed_size, patch_size * patch_size * output_dims)
         self.fold = nn.Fold(output_size=(image_size, image_size), kernel_size=patch_size, stride=patch_size)
-    # end def
     
     def forward(self, x):
         x = self.projection(x)
@@ -126,7 +120,7 @@ class ViT(nn.Module):
         self.num_heads = num_heads
         self.dropout = dropout
 
-        heads = [SelfAttentionEncoderBlock(embed_size, num_heads, dropout) for i in range(num_blocks)]
+        heads = [SelfAttentionEncoderBlock(embed_size, num_heads, dropout) for head in range(num_blocks)]
         self.layers = nn.Sequential(
             nn.BatchNorm2d(num_features=in_channels),
             ViTInput(image_size, patch_size, in_channels, embed_size),
@@ -139,31 +133,6 @@ class ViT(nn.Module):
         return x
 
 
-class EarlyStopper:
-    def __init__(self, patience=10, min_delta=0):
-        self.patience = patience
-        self.min_delta = min_delta
-        self.counter = 0
-        self.min_validation_loss = np.inf
-        self.best_model_state = None
-
-    def early_stop(self, validation_loss, model):
-        early_stop = False
-        best_model = False
-
-        if validation_loss < self.min_validation_loss:
-            self.min_validation_loss = validation_loss
-            self.counter = 0
-            best_model = True
-            self.best_model_state = model.state_dict()
-        elif validation_loss > (self.min_validation_loss + self.min_delta):
-            self.counter += 1
-            if self.counter >= self.patience:
-                early_stop = True
-
-        return early_stop, best_model
-
-
 def train(
         model, 
         optimizer,
@@ -172,7 +141,6 @@ def train(
         val_loader, 
         test_loader
     ):
-
     # Initialize training history with 1 for each loss metric, for the zeroth epoch
     training_history = {
         "train_loss": [1],
@@ -226,7 +194,7 @@ def train(
         average_val_loss = total_val_loss / len(val_loader)
         average_test_loss = total_test_loss / len(test_loader)
 
-        if (epoch == 3) & (average_val_loss > 0.9):
+        if (epoch == 5) & (average_val_loss > 0.95):
             print("Optimisation not working, stopping early")
             break
 
@@ -272,76 +240,6 @@ f"{colour_prefix}Epoch {epoch} - Train DL: {average_train_loss:.4f} \
         print(f"Saving best model with validation loss: {early_stopper.min_validation_loss:.4f}")
 
     return model, training_history
-
-
-def save_outputs(model, training_history):
-    # Create output directory if it doesn't exist
-    if not os.path.exists(config_vit.FOLDER_PATH):
-        os.makedirs(config_vit.FOLDER_PATH)
-
-    # Plot loss history
-    plt.figure(figsize=(12, 7))
-    plt.grid(True, which='both', linestyle='-', linewidth=0.5)
-    plt.minorticks_on()
-    plt.grid(True, which='minor', linestyle=':', linewidth=0.25)
-    plt.plot(training_history["train_loss"], label="Train Dice loss")
-    plt.plot(training_history["val_loss"], label="Val Dice loss")
-    plt.plot(training_history["test_loss"], label="Test Dice loss")
-    plt.xlabel("Epoch #")
-    plt.ylabel("Dice loss")
-    plt.legend(loc="upper right")
-    plt.title(f"Model: {config_vit.MODEL_NAME}")
-    plt.savefig(config_vit.LOSS_PLOT_SAVE_PATH)
-
-    hyperparameters = {
-        'device': str(config_vit.DEVICE),
-        'input_channels': config_vit.IN_CHANNELS, 
-        'output_channels': config_vit.OUT_CHANNELS,
-        'image_width': config_vit.IMAGE_WIDTH,
-        'image_height': config_vit.IMAGE_HEIGHT,
-        'data_split_random_seed': config_vit.DATA_SPLIT_RS,
-        'model_random_seed': config_vit.MODEL_RS,
-        'learning_rate': config_vit.LR,
-        'learning_rate_gamma': config_vit.LR_GAMMA,
-        'learning_rate_patience': config_vit.LR_PATIENCE,
-        'learning_rate_factor': config_vit.LR_FACTOR,
-        'max_epochs': config_vit.MAX_EPOCHS,
-        'early_stopping_steps': config_vit.EARLY_STOPPING_STEPS,
-        'early_stopping_min_delta': config_vit.EARLY_STOPPING_MIN_DELTA,
-        'batch_size': config_vit.BATCH_SIZE,
-        'max_batch_size': config_vit.MAX_BATCH_SIZE,
-        'num_workers': config_vit.NUM_WORKERS,
-        'train_size': config_vit.TRAIN_SIZE,
-        'val_size': config_vit.VAL_SIZE, 
-        'test_size': config_vit.TEST_SIZE,
-        'beta_weighting': config_vit.BETA_WEIGHTING,
-        'patch_size': config_vit.PATCH_SIZE,
-        'embed_size': config_vit.EMBED_SIZE,
-        'num_blocks': config_vit.NUM_BLOCKS,
-        'num_heads': config_vit.NUM_HEADS,
-        'dropout': config_vit.DROPOUT,
-    }
-
-    # Find results of model which performed best on validation set
-    best_val_loss = min(training_history["val_loss"])
-    best_val_loss_index = training_history["val_loss"].index(best_val_loss)
-
-    results = {
-        'epochs': training_history["epochs"],
-        "train_loss": training_history["train_loss"][best_val_loss_index],
-        "val_loss": best_val_loss,
-        "test_loss": training_history["test_loss"][best_val_loss_index],
-    }
-
-    overall_result = {
-        "hyperparameters": hyperparameters,
-        "results": results,
-    }
-
-    with open(config_vit.HYPER_PARAM_SAVE_PATH, 'w') as f:
-        json.dump(overall_result, f, indent=4)
-
-    torch.save(model, config_vit.MODEL_SAVE_PATH)
 
 
 if __name__ == "__main__":
@@ -397,4 +295,4 @@ if __name__ == "__main__":
     )
 
     # Save model and results
-    save_outputs(model, training_history)
+    save_outputs(model, training_history, config_vit)

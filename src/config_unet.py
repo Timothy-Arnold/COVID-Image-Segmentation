@@ -32,7 +32,7 @@ TEST_SIZE = 0.125
 
 BETA_WEIGHTING = 3 # Weighting for false negatives, as opposed to false positives
 
-ROOT_DIR = "C:/Users/timcy/Documents/Code/Personal/U-Net/"
+ROOT_DIR = "C:/Users/timcy/Documents/Code/Personal/COVID-Image-Segmentation/"
 DF_PATH = 'data/df_full.csv'
 DF_TEST_PATH = 'data/df_test.csv'
 LOSS_PLOT_SAVE_PATH = f'output/{MODEL_TYPE}/{MODEL_NAME}/loss_plot.png'

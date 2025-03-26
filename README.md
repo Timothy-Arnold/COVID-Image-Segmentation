@@ -1,5 +1,5 @@
 # COVID-Image-Segmentation
-Models for segmentation of lung lesions in CT scans of COVID patients.
+Using various ML models for the segmentation of lung lesions in CT scans of COVID patients.
 
 Data from Kaggle: https://www.kaggle.com/datasets/maedemaftouni/covid19-ct-scan-lesion-segmentation-dataset/data
 

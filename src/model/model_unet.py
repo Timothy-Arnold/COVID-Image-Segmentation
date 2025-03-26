@@ -2,11 +2,6 @@ import numpy as np
 import pandas as pd
 from time import time
 import logging
-import json
-import os
-import matplotlib
-matplotlib.use('TkAgg')  # or try 'Qt5Agg' if TkAgg doesn't work
-import matplotlib.pyplot as plt
 
 import torch
 import torch.nn as nn
@@ -15,6 +10,7 @@ import torch.nn.functional as F
 import src.config_unet as config_unet
 from src.data.dataset import split_data
 from src.utils.utils import GWDiceLoss, print_time_taken
+from src.model.model_utils import EarlyStopper, save_outputs
 
 
 class UNet(nn.Module):
@@ -66,31 +62,6 @@ class UNet(nn.Module):
             nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
         )
-    
-
-class EarlyStopper:
-    def __init__(self, patience=10, min_delta=0):
-        self.patience = patience
-        self.min_delta = min_delta
-        self.counter = 0
-        self.min_validation_loss = np.inf
-        self.best_model_state = None
-
-    def early_stop(self, validation_loss, model):
-        early_stop = False
-        best_model = False
-
-        if validation_loss < self.min_validation_loss:
-            self.min_validation_loss = validation_loss
-            self.counter = 0
-            best_model = True
-            self.best_model_state = model.state_dict()
-        elif validation_loss > (self.min_validation_loss + self.min_delta):
-            self.counter += 1
-            if self.counter >= self.patience:
-                early_stop = True
-
-        return early_stop, best_model
 
 
 def train(
@@ -101,7 +72,6 @@ def train(
         val_loader, 
         test_loader
     ):
-
     # Initialize training history with 1 for each loss metric, for the zeroth epoch
     training_history = {
         "train_loss": [1],
@@ -201,71 +171,6 @@ f"{colour_prefix}Epoch {epoch} - Train DL: {average_train_loss:.4f} \
         print(f"Saving best model with validation loss: {early_stopper.min_validation_loss:.4f}")
 
     return model, training_history
-
-
-def save_outputs(model, training_history):
-    # Create output directory if it doesn't exist
-    if not os.path.exists(f'output/{config_unet.MODEL_NAME}'):
-        os.makedirs(f'output/{config_unet.MODEL_NAME}')
-
-    # Plot loss history
-    plt.figure(figsize=(12, 7))
-    plt.grid(True, which='both', linestyle='-', linewidth=0.5)
-    plt.minorticks_on()
-    plt.grid(True, which='minor', linestyle=':', linewidth=0.25)
-    plt.plot(training_history["train_loss"], label="Train Dice loss")
-    plt.plot(training_history["val_loss"], label="Val Dice loss")
-    plt.plot(training_history["test_loss"], label="Test Dice loss")
-    plt.xlabel("Epoch #")
-    plt.ylabel("Dice loss")
-    plt.legend(loc="upper right")
-    plt.title(f"Model: {config_unet.MODEL_NAME}")
-    plt.savefig(config_unet.LOSS_PLOT_SAVE_PATH)
-
-    hyperparameters = {
-        'device': str(config_unet.DEVICE),
-        'input_channels': config_unet.IN_CHANNELS, 
-        'output_channels': config_unet.OUT_CHANNELS,
-        'image_width': config_unet.IMAGE_WIDTH,
-        'image_height': config_unet.IMAGE_HEIGHT,
-        'data_split_random_seed': config_unet.DATA_SPLIT_RS,
-        'model_random_seed': config_unet.MODEL_RS,
-        'learning_rate': config_unet.LR,
-        'learning_rate_gamma': config_unet.LR_GAMMA,
-        'learning_rate_patience': config_unet.LR_PATIENCE,
-        'learning_rate_factor': config_unet.LR_FACTOR,
-        'max_epochs': config_unet.MAX_EPOCHS,
-        'early_stopping_steps': config_unet.EARLY_STOPPING_STEPS,
-        'early_stopping_min_delta': config_unet.EARLY_STOPPING_MIN_DELTA,
-        'batch_size': config_unet.BATCH_SIZE,
-        'max_batch_size': config_unet.MAX_BATCH_SIZE,
-        'num_workers': config_unet.NUM_WORKERS,
-        'train_size': config_unet.TRAIN_SIZE,
-        'val_size': config_unet.VAL_SIZE, 
-        'test_size': config_unet.TEST_SIZE,
-        'beta_weighting': config_unet.BETA_WEIGHTING,
-    }
-
-    # Find results of model which performed best on validation set
-    best_val_loss = min(training_history["val_loss"])
-    best_val_loss_index = training_history["val_loss"].index(best_val_loss)
-
-    results = {
-        'epochs': training_history["epochs"],
-        "train_loss": training_history["train_loss"][best_val_loss_index],
-        "val_loss": best_val_loss,
-        "test_loss": training_history["test_loss"][best_val_loss_index],
-    }
-
-    overall_result = {
-        "hyperparameters": hyperparameters,
-        "results": results,
-    }
-
-    with open(config_unet.HYPER_PARAM_SAVE_PATH, 'w') as f:
-        json.dump(overall_result, f, indent=4)
-
-    torch.save(model, config_unet.MODEL_SAVE_PATH)
 
 
 if __name__ == "__main__":
