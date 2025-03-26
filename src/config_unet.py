@@ -1,7 +1,6 @@
 import torch
 import os
 
-# UNet
 MODEL_NAME = "unet_standard_0"
 
 LR = 1e-4
@@ -12,10 +11,6 @@ MAX_EPOCHS = 200
 EARLY_STOPPING_STEPS = 20
 EARLY_STOPPING_MIN_DELTA = 0.001
 
-# ViT
-# MODEL_NAME = "vit_0"
-
-# General
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 IN_CHANNELS = 1
