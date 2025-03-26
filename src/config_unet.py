@@ -1,5 +1,4 @@
 import torch
-import os
 
 MODEL_NAME = "unet_standard_0"
 

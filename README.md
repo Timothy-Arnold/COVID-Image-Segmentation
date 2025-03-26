@@ -1,5 +1,5 @@
-# U-Net
-U Net model for segmentation of lung lesions in CT scans of COVID patients.
+# COVID-Image-Segmentation
+Models for segmentation of lung lesions in CT scans of COVID patients.
 
 Data from Kaggle: https://www.kaggle.com/datasets/maedemaftouni/covid19-ct-scan-lesion-segmentation-dataset/data
 
@@ -27,5 +27,5 @@ Ideas tried:
 
 Ideas to try:
 
-- Improve interpretability of model predictions, perhaps with SHAP or LIME, or attention patterns
+- Improve interpretability of model predictions, perhaps with SHAP or LIME, or attention patterns for ViT
 - Upscale the final mask later down the line, for slightly more accurate dice loss results

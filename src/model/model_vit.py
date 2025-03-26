@@ -276,8 +276,8 @@ f"{colour_prefix}Epoch {epoch} - Train DL: {average_train_loss:.4f} \
 
 def save_outputs(model, training_history):
     # Create output directory if it doesn't exist
-    if not os.path.exists(f'output/{config_vit.MODEL_NAME}'):
-        os.makedirs(f'output/{config_vit.MODEL_NAME}')
+    if not os.path.exists(config_vit.FOLDER_PATH):
+        os.makedirs(config_vit.FOLDER_PATH)
 
     # Plot loss history
     plt.figure(figsize=(12, 7))

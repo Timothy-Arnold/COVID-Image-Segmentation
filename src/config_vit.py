@@ -1,11 +1,10 @@
 import torch
-import os
 
-MODEL_NAME = "vit_0"
+MODEL_NAME = "first"
 
 MODEL_TYPE = "vit"
 
-LR = 4e-4
+LR = 3e-4
 LR_GAMMA = 0.995
 LR_PATIENCE = 10
 LR_FACTOR = 0.5
@@ -26,8 +25,8 @@ OUT_CHANNELS = 1
 IMAGE_WIDTH = 256
 IMAGE_HEIGHT = 256
 
-DATA_SPLIT_RS = 1
-MODEL_RS = 0
+DATA_SPLIT_RS = 0
+MODEL_RS = 1
 
 BATCH_SIZE = 16
 MAX_BATCH_SIZE = 32 # Used for validation and testing
@@ -42,6 +41,7 @@ BETA_WEIGHTING = 1 # Weighting for false negatives, as opposed to false positive
 ROOT_DIR = "C:/Users/timcy/Documents/Code/Personal/U-Net/"
 DF_PATH = 'data/df_full.csv'
 DF_TEST_PATH = 'data/df_test.csv'
-LOSS_PLOT_SAVE_PATH = f'output/{MODEL_TYPE}/{MODEL_NAME}/loss_plot.png'
-HYPER_PARAM_SAVE_PATH = f'output/{MODEL_TYPE}/{MODEL_NAME}/hyper_params.json'
-MODEL_SAVE_PATH = f'output/{MODEL_TYPE}/{MODEL_NAME}/trained.pth'
+FOLDER_PATH = f'output/{MODEL_TYPE}/{MODEL_NAME}'
+LOSS_PLOT_SAVE_PATH = f'{FOLDER_PATH}/loss_plot.png'
+HYPER_PARAM_SAVE_PATH = f'{FOLDER_PATH}/hyper_params.json'
+MODEL_SAVE_PATH = f'{FOLDER_PATH}/trained.pth'
