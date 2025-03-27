@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from time import time
 import logging
 
 import torch
@@ -9,8 +8,8 @@ import torch.nn.functional as F
 
 import src.config_unet as config
 from src.data.dataset import split_data
-from src.utils.general_utils import GWDiceLoss
 from src.utils.model_utils import train, save_outputs
+from src.utils.general_utils import GWDiceLoss
 
 
 class UNet(nn.Module):

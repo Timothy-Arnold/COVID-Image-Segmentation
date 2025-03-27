@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-from time import time
 import logging
 
 import torch
@@ -9,8 +8,29 @@ import torch.nn.functional as F
 
 import src.config_vit as config
 from src.data.dataset import split_data
-from src.utils.general_utils import GWDiceLoss
 from src.utils.model_utils import train, save_outputs
+from src.utils.general_utils import GWDiceLoss
+
+
+def get_sinusoid_encoding(num_tokens, token_len):
+    """ Make Sinusoid Encoding Table
+
+        Args:
+            num_tokens (int): number of tokens
+            token_len (int): length of a token
+            
+        Returns:
+            (torch.FloatTensor) sinusoidal position encoding table
+    """
+
+    def get_position_angle_vec(i):
+        return [i / np.power(10000, 2 * (j // 2) / token_len) for j in range(token_len)]
+
+    sinusoid_table = np.array([get_position_angle_vec(i) for i in range(num_tokens)])
+    sinusoid_table[:, 0::2] = np.sin(sinusoid_table[:, 0::2])
+    sinusoid_table[:, 1::2] = np.cos(sinusoid_table[:, 1::2]) 
+
+    return torch.FloatTensor(sinusoid_table).unsqueeze(0)
 
 
 class ImageToPatches(nn.Module):
@@ -58,7 +78,7 @@ class ViTInput(nn.Module):
     def forward(self, x):
         x = self.i2p(x)
         x = self.pe(x)
-        x = x + self.position_embed
+        x += self.position_embed
         return x
     
 
