@@ -68,7 +68,7 @@ def split_data(df, batch_size, max_batch_size, num_workers):
     train_transform = transforms.Compose([
         # transforms.RandomRotation(15),
         # transforms.RandomHorizontalFlip(),
-        transforms.ColorJitter(brightness=0.2),
+        transforms.ColorJitter(brightness=0.2, contrast=0.2),
         transforms.ToTensor(), 
         transforms.Resize((config_unet.IMAGE_WIDTH, config_unet.IMAGE_HEIGHT))
     ])

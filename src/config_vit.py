@@ -4,7 +4,7 @@ MODEL_NAME = "first"
 
 MODEL_TYPE = "vit"
 
-LR = 5e-4
+LR = 5e-5
 LR_GAMMA = 0.995
 LR_PATIENCE = 10
 LR_FACTOR = 0.5
@@ -25,10 +25,10 @@ OUT_CHANNELS = 1
 IMAGE_WIDTH = 256
 IMAGE_HEIGHT = 256
 
-DATA_SPLIT_RS = 1
-MODEL_RS = 1
+DATA_SPLIT_RS = 0
+MODEL_RS = 0
 
-BATCH_SIZE = 16
+BATCH_SIZE = 32
 MAX_BATCH_SIZE = 32 # Used for validation and testing
 NUM_WORKERS = 1 #os.cpu_count()
 

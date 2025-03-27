@@ -12,7 +12,7 @@ from monai.losses import DiceLoss
 
 import src.config_unet as config_unet
 from src.model.model_unet import UNet
-from src.utils.utils import GWDiceLoss, BWDiceLoss
+from src.utils.general_utils import GWDiceLoss, BWDiceLoss
 
 
 n_samples = 4

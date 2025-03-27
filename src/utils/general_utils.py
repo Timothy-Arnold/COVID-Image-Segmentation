@@ -73,7 +73,7 @@ class BWDiceLoss(nn.Module):
         return 1 - mean_dice
 
 
-def print_time_taken(start_time, end_time):
+def print_time_taken(start_time, end_time) -> None:
     total_seconds = end_time - start_time
     hours = int(total_seconds // 3600)
     minutes = int((total_seconds % 3600) // 60)

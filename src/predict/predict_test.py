@@ -11,7 +11,7 @@ import torchvision.transforms as transforms
 
 import src.config_unet as config_unet
 from src.data.dataset import split_data
-from src.utils.utils import GWDiceLoss, BWDiceLoss
+from src.utils.general_utils import GWDiceLoss, BWDiceLoss
 from src.model.model_unet import UNet
 
 
